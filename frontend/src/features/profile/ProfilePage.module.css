@@ -67,6 +67,25 @@
   flex-wrap: wrap;
 }
 
+.danger {
+  display: grid;
+  gap: var(--space-4);
+  justify-items: start;
+}
+
+.confirm {
+  display: grid;
+  gap: var(--space-4);
+  width: 100%;
+  max-width: 360px;
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
 @media (max-width: 480px) {
   .stat {
     padding: var(--space-4);

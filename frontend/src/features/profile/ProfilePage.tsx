@@ -1,17 +1,24 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { useAuth } from '../../auth/AuthProvider'
 import { Button } from '../../components/Button'
 import { PageHeader } from '../../components/PageHeader'
 import { Section } from '../../components/Section'
+import { TextField } from '../../components/TextField'
 import { supabase } from '../../lib/supabase'
 import styles from './ProfilePage.module.css'
 
 type Stats = { played: number; won: number }
 
+const CONFIRM_WORD = 'delete'
+
 export function ProfilePage() {
   const { user, username, signOut } = useAuth()
   const [stats, setStats] = useState<Stats | null>(null)
   const [signingOut, setSigningOut] = useState(false)
+  const [confirming, setConfirming] = useState(false)
+  const [typed, setTyped] = useState('')
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState('')
 
   // Totals across games. Stays at zero until games start recording results.
   useEffect(() => {
@@ -28,6 +35,27 @@ export function ProfilePage() {
         })
       })
   }, [user])
+
+  function cancelDelete() {
+    setConfirming(false)
+    setTyped('')
+    setDeleteError('')
+  }
+
+  async function deleteAccount(event: FormEvent) {
+    event.preventDefault()
+    if (!supabase || typed.trim().toLowerCase() !== CONFIRM_WORD) return
+    setDeleting(true)
+    setDeleteError('')
+    const { error } = await supabase.rpc('delete_my_account')
+    if (error) {
+      setDeleting(false)
+      setDeleteError('We couldn’t delete your account. Try again in a moment.')
+      return
+    }
+    // The user no longer exists; this clears the local session and the router returns to sign-in.
+    await signOut()
+  }
 
   const name = username ?? user?.email?.split('@')[0] ?? 'Player'
   const joined = user?.created_at
@@ -74,6 +102,46 @@ export function ProfilePage() {
           >
             Sign out
           </Button>
+        </div>
+      </Section>
+
+      <Section title="Delete account">
+        <div className={styles.danger}>
+          <p className={styles.meta}>
+            Permanently removes your profile, friends, invites and stats. This can’t be undone.
+          </p>
+          {!confirming ? (
+            <Button variant="danger" onClick={() => setConfirming(true)}>
+              Delete account
+            </Button>
+          ) : (
+            <form className={styles.confirm} onSubmit={deleteAccount} noValidate>
+              <TextField
+                id="delete-confirm"
+                label={`Type “${CONFIRM_WORD}” to confirm`}
+                autoComplete="off"
+                autoCapitalize="none"
+                spellCheck={false}
+                autoFocus
+                value={typed}
+                onChange={(e) => setTyped(e.target.value)}
+                error={deleteError || undefined}
+              />
+              <div className={styles.actions}>
+                <Button
+                  type="submit"
+                  variant="danger"
+                  loading={deleting}
+                  disabled={typed.trim().toLowerCase() !== CONFIRM_WORD}
+                >
+                  Delete my account forever
+                </Button>
+                <Button type="button" variant="secondary" onClick={cancelDelete} disabled={deleting}>
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          )}
         </div>
       </Section>
     </>

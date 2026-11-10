@@ -81,3 +81,14 @@
     transform: rotate(360deg);
   }
 }
+
+.danger {
+  background: var(--danger);
+  color: #fff;
+}
+.danger:hover:not(:disabled) {
+  filter: brightness(0.92);
+}
+.danger:disabled:not([aria-busy]) {
+  opacity: 0.45;
+}
