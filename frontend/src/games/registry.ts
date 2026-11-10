@@ -13,5 +13,5 @@ type EngineModule = { default: ComponentType<GameEngineProps> }
 // To add one: create src/games/engines/<id>/index.tsx with a default export,
 // register it below, and set its status to 'available' in catalog.ts.
 export const engines: Record<string, () => Promise<EngineModule>> = {
-  // chess: () => import('./engines/chess'),
+  'tic-tac-toe': () => import('./engines/tic-tac-toe'),
 }

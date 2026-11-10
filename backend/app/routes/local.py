@@ -16,6 +16,7 @@ from pydantic import BaseModel, Field
 
 from ..auth import User, current_user
 from ..config import Settings, get_settings
+from ..local.bot import ensure_bot_friend
 from ..local.db import now_iso, session
 from ..local.gateway import SqliteGateway, get_local_gateway
 from ..local.passwords import hash_password, verify_password
@@ -115,6 +116,8 @@ def complete_signup(
             (user.id, name, now, now),
         )
         conn.execute("update users set password_hash = ? where id = ?", (hash_password(body.password), user.id))
+        # Local mode only: give every new user a test friend to chat with.
+        ensure_bot_friend(conn, user.id)
         return session_payload(settings, conn, user.id)
 
 

@@ -21,12 +21,22 @@ import httpx
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-TABLES = ["profiles", "friendships", "game_invites", "game_stats"]
-CONFLICT = {"profiles": "id", "friendships": "id", "game_invites": "id", "game_stats": "user_id,game_id"}
+TABLES = ["profiles", "friendships", "game_invites", "game_stats", "messages"]
+CONFLICT = {
+    "profiles": "id",
+    "friendships": "id",
+    "game_invites": "id",
+    "game_stats": "user_id,game_id",
+    "messages": "id",
+}
+# The local test bot is not a real person, so it and anything that mentions it stays behind.
+BOT_ID = "00000000-0000-4000-8000-000000000b07"
+ID_COLUMNS = ("id", "user_id", "requester_id", "addressee_id", "from_id", "to_id", "sender_id", "recipient_id")
 
 
 def rows(conn: sqlite3.Connection, table: str) -> list[dict[str, Any]]:
-    return [dict(r) for r in conn.execute(f"select * from {table}")]  # noqa: S608 (fixed table names)
+    found = [dict(r) for r in conn.execute(f"select * from {table}")]  # noqa: S608 (fixed table names)
+    return [r for r in found if BOT_ID not in (r.get(c) for c in ID_COLUMNS)]
 
 
 def build_plan(db_path: str) -> dict[str, list[dict[str, Any]]]:

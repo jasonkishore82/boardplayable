@@ -313,7 +313,7 @@ export function AuthPage() {
           <Suspense fallback={null}>
             <PieceScene />
           </Suspense>
-          <p className={styles.caption}>Chess, battleship, snakes and ladders, and more. In 3D, with friends.</p>
+          <p className={styles.caption}>Tic-tac-toe with friends, in 3D.</p>
         </aside>
       )}
     </div>

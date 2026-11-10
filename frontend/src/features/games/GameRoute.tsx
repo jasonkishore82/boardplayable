@@ -1,5 +1,5 @@
 import { lazy, Suspense, useMemo } from 'react'
-import { Link, Navigate, useParams } from 'react-router-dom'
+import { Link, Navigate, useParams, useSearchParams } from 'react-router-dom'
 import { formatPlayers, getGame } from '../../games/catalog'
 import { GameGlyph } from '../../games/GameGlyph'
 import { engines } from '../../games/registry'
@@ -8,6 +8,9 @@ import styles from './GameRoute.module.css'
 // /games/:gameId. Loads the game's engine when it has one, otherwise shows its details.
 export function GameRoute() {
   const { gameId } = useParams()
+  // An invite link looks like /games/tic-tac-toe?room=ab12cd
+  const [params] = useSearchParams()
+  const roomId = params.get('room') ?? undefined
   const game = getGame(gameId)
   const loader = game && game.status === 'available' ? engines[game.id] : undefined
   const Engine = useMemo(() => (loader ? lazy(loader) : null), [loader])
@@ -17,7 +20,7 @@ export function GameRoute() {
   if (Engine) {
     return (
       <Suspense fallback={<p className={styles.loading}>Setting up the table…</p>}>
-        <Engine gameId={game.id} />
+        <Engine gameId={game.id} roomId={roomId} />
       </Suspense>
     )
   }

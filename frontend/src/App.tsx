@@ -28,7 +28,7 @@ export function App() {
           <Route element={<AppShell />}>
             <Route path="/games" element={<GamesPage />} />
             <Route path="/games/:gameId" element={<GameRoute />} />
-            <Route path="/friends" element={<FriendsPage />} />
+            <Route path="/friends/:friendId?" element={<FriendsPage />} />
             <Route path="/profile" element={<ProfilePage />} />
           </Route>
         </Route>

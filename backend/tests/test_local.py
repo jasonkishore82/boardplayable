@@ -94,3 +94,20 @@ def test_delete_account_removes_everything(client):
 def test_local_routes_need_a_token(client):
     assert client.get("/v1/local/session").status_code == 401
     assert client.delete("/v1/local/account").status_code == 401
+
+
+def test_lan_browsers_are_allowed_in_local_mode(client):
+    def allowed(origin):
+        res = client.options(
+            "/v1/local/otp/send",
+            headers={"Origin": origin, "Access-Control-Request-Method": "POST", "Access-Control-Request-Headers": "content-type"},
+        )
+        return res.headers.get("access-control-allow-origin") == origin
+
+    assert allowed("http://localhost:5175")
+    assert allowed("http://192.168.2.111:5175")
+    assert allowed("http://10.0.0.7:5175")
+    assert allowed("http://172.20.1.2:5175")
+    assert not allowed("https://evil.example.com")
+    assert not allowed("http://192.168.2.111.evil.com:5175")
+    assert not allowed("http://172.40.1.2:5175")

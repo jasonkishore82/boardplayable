@@ -1,17 +1,126 @@
 .layout {
   display: grid;
-  gap: var(--space-7);
+  gap: var(--space-6);
 }
 
 @media (min-width: 880px) {
   .layout {
-    grid-template-columns: 1.6fr 1fr;
-    gap: var(--space-8);
+    grid-template-columns: minmax(280px, 1fr) 1.7fr;
+    gap: var(--space-7);
+    align-items: start;
   }
+}
+
+/* On phones show either the list or the open chat, not both. */
+@media (max-width: 879px) {
+  .hasChat .side {
+    display: none;
+  }
+  .layout:not(.hasChat) .chat {
+    display: none;
+  }
+}
+
+.list {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.friend {
+  display: block;
+  padding: var(--space-3);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: inherit;
+  text-decoration: none;
+  transition: border-color var(--duration) var(--ease), background-color var(--duration) var(--ease);
+}
+
+.friend:hover {
+  border-color: var(--border-strong);
+}
+
+.friend.current {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.request {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.waiting {
+  margin-top: var(--space-3);
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.person {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.personName {
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.muted {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.problem {
+  margin: 0 0 var(--space-5);
+  padding: var(--space-3) var(--space-4);
+  background: var(--danger-soft);
+  border-radius: var(--radius-sm);
+  color: var(--danger);
+  font-size: 14px;
 }
 
 .add {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
+}
+
+.pick {
+  display: grid;
+  place-items: center;
+  min-height: 320px;
+  background: var(--surface-sunken);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-lg);
 }

@@ -22,14 +22,14 @@ async def room_socket(
     try:
         room = await rooms.join(room_id, user, ws)
     except RoomFull:
-        await ws.send_json({"type": "error", "message": "Room is full"})
+        await ws.send_json({"type": "error", "message": "This game is full.", "fatal": True})
         await ws.close()
         return
 
     try:
         while True:
             data = await ws.receive_json()
-            await rooms.broadcast(room, {"type": "message", "from": user.id, "data": data})
+            await rooms.handle(room, user, ws, data)
     except WebSocketDisconnect:
         pass
     finally:
