@@ -10,3 +10,5 @@ __pycache__
 .vercel
 .DS_Store
 *.tsbuildinfo
+local.db
+local.db-*

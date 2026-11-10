@@ -38,7 +38,10 @@ export function validatePassword(value: string, mode: 'sign-in' | 'sign-up'): st
 
 // Turns errors from our own API into short, human messages.
 export function friendlyApiError(error: { status: number; message: string }): string {
+  if (error.status === 401) return 'That email and password don’t match.'
+  if (error.status === 409) return error.message || 'That is already taken.'
   if (error.status === 429) return error.message || 'Too many attempts. Try again in a minute.'
+  if (error.status === 501) return error.message
   if (error.status === 400 || error.status === 422) return error.message || 'That doesn’t look right.'
   if (error.status === 503) return 'Sign-up is temporarily unavailable. Try again soon.'
   return 'Something went wrong. Try again.'

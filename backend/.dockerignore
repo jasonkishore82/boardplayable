@@ -4,3 +4,5 @@ __pycache__
 *.pyc
 tests
 .pytest_cache
+local.db
+local.db-*

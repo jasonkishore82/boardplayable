@@ -5,7 +5,7 @@ import { friendlyAuthError, validatePassword } from '../../auth/validation'
 import { Button } from '../../components/Button'
 import { TextField } from '../../components/TextField'
 import { Wordmark } from '../../components/Wordmark'
-import { supabase } from '../../lib/supabase'
+import { authBackend } from '../../lib/auth'
 import styles from './AuthPage.module.css'
 
 // Reached from the email link. Supabase signs the user in from the link, then they set a new password.
@@ -21,12 +21,16 @@ export function ResetPasswordPage() {
     event.preventDefault()
     const problem = validatePassword(password, 'sign-up')
     setError(problem)
-    if (problem || !supabase) return
+    if (problem || !authBackend) return
     setLoading(true)
-    const { error: updateError } = await supabase.auth.updateUser({ password })
-    setLoading(false)
-    if (updateError) setFormError(friendlyAuthError(updateError))
-    else navigate('/games', { replace: true })
+    try {
+      await authBackend.setPassword(password)
+      navigate('/games', { replace: true })
+    } catch (error) {
+      setFormError(friendlyAuthError(error as { message?: string }))
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (

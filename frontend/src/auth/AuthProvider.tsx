@@ -1,11 +1,11 @@
-import type { Session, User } from '@supabase/supabase-js'
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
+import { authBackend } from '../lib/auth'
+import type { AppSession, AppUser } from '../lib/authTypes'
 
 type AuthState = {
-  session: Session | null
-  user: User | null
+  session: AppSession | null
+  user: AppUser | null
   username: string | null
   loading: boolean
   signOut: () => Promise<void>
@@ -14,34 +14,33 @@ type AuthState = {
 const AuthContext = createContext<AuthState | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null)
+  const [session, setSession] = useState<AppSession | null>(null)
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
 
   useEffect(() => {
-    if (!supabase) {
+    if (!authBackend) {
       setLoading(false)
       return
     }
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session)
+    authBackend.getSession().then((current) => {
+      setSession(current)
       setLoading(false)
     })
-    const { data } = supabase.auth.onAuthStateChange((event, next) => {
+    return authBackend.onChange((next, event) => {
       setSession(next)
       if (event === 'PASSWORD_RECOVERY') navigate('/reset-password', { replace: true })
     })
-    return () => data.subscription.unsubscribe()
   }, [navigate])
 
   const value = useMemo<AuthState>(
     () => ({
       session,
       user: session?.user ?? null,
-      username: (session?.user.user_metadata?.username as string | undefined) ?? null,
+      username: session?.user.username ?? null,
       loading,
       signOut: async () => {
-        await supabase?.auth.signOut()
+        await authBackend?.signOut()
       },
     }),
     [session, loading],

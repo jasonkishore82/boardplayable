@@ -4,7 +4,7 @@ import { Button } from '../../components/Button'
 import { PageHeader } from '../../components/PageHeader'
 import { Section } from '../../components/Section'
 import { TextField } from '../../components/TextField'
-import { supabase } from '../../lib/supabase'
+import { authBackend } from '../../lib/auth'
 import styles from './ProfilePage.module.css'
 
 type Stats = { played: number; won: number }
@@ -22,18 +22,8 @@ export function ProfilePage() {
 
   // Totals across games. Stays at zero until games start recording results.
   useEffect(() => {
-    if (!supabase || !user) return
-    supabase
-      .from('game_stats')
-      .select('played, won')
-      .eq('user_id', user.id)
-      .then(({ data }) => {
-        const rows = data ?? []
-        setStats({
-          played: rows.reduce((n, r) => n + r.played, 0),
-          won: rows.reduce((n, r) => n + r.won, 0),
-        })
-      })
+    if (!authBackend || !user) return
+    authBackend.getStats().then(setStats, () => setStats({ played: 0, won: 0 }))
   }, [user])
 
   function cancelDelete() {
@@ -44,11 +34,12 @@ export function ProfilePage() {
 
   async function deleteAccount(event: FormEvent) {
     event.preventDefault()
-    if (!supabase || typed.trim().toLowerCase() !== CONFIRM_WORD) return
+    if (!authBackend || typed.trim().toLowerCase() !== CONFIRM_WORD) return
     setDeleting(true)
     setDeleteError('')
-    const { error } = await supabase.rpc('delete_my_account')
-    if (error) {
+    try {
+      await authBackend.deleteAccount()
+    } catch {
       setDeleting(false)
       setDeleteError('We couldn’t delete your account. Try again in a moment.')
       return
@@ -58,8 +49,8 @@ export function ProfilePage() {
   }
 
   const name = username ?? user?.email?.split('@')[0] ?? 'Player'
-  const joined = user?.created_at
-    ? new Date(user.created_at).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
+  const joined = user?.createdAt
+    ? new Date(user.createdAt).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
     : null
   const played = stats?.played ?? 0
   const won = stats?.won ?? 0

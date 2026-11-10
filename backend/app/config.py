@@ -2,6 +2,7 @@
 
 from functools import lru_cache
 
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -24,8 +25,20 @@ class Settings(BaseSettings):
     # Key for hashing codes. Defaults to the service role key when empty.
     otp_secret: str = ""
 
+    # Local testing without Supabase: a SQLite file and local sign-in. NEVER turn this on in production.
+    local_mode: bool = False
+    local_db_path: str = "local.db"
+    local_jwt_secret: str = "local-dev-secret-not-for-production-use-0123456789"
+
     # Comma-separated list of front-end origins allowed to call the API.
     cors_origins: str = ""
+
+    @model_validator(mode="after")
+    def _local_tokens(self) -> "Settings":
+        # In local mode the API signs its own tokens, so it also verifies them with the same secret.
+        if self.local_mode and not self.supabase_jwt_secret:
+            self.supabase_jwt_secret = self.local_jwt_secret
+        return self
 
     @property
     def cors_origin_list(self) -> list[str]:

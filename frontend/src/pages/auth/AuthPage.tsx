@@ -13,8 +13,8 @@ import {
 import { Button } from '../../components/Button'
 import { TextField } from '../../components/TextField'
 import { Wordmark } from '../../components/Wordmark'
-import { api, ApiError } from '../../lib/api'
-import { supabase } from '../../lib/supabase'
+import { authBackend } from '../../lib/auth'
+import { ApiError } from '../../lib/http'
 import styles from './AuthPage.module.css'
 
 const PieceScene = lazy(() => import('../../three/PieceScene'))
@@ -103,10 +103,14 @@ export function AuthPage() {
     setValues((v) => ({ ...v, email }))
   }
 
-  // Asks our API to email a 6-digit code.
-  function sendCode(email: string) {
-    return api('/v1/otp/send', { method: 'POST', body: JSON.stringify({ email }) })
+  // Asks the API to email a 6-digit code. In local mode it also hands the code back, shown on screen.
+  async function sendCode(email: string): Promise<string | undefined> {
+    if (!authBackend) return undefined
+    const { devCode } = await authBackend.sendCode(email)
+    return devCode
   }
+
+  const devHint = (code?: string) => (code ? ` Local mode: your code is ${code}.` : '')
 
   function describe(error: unknown): string {
     return error instanceof ApiError
@@ -115,17 +119,18 @@ export function AuthPage() {
   }
 
   async function resendCode() {
-    if (!supabase || cooldown > 0) return
+    if (!authBackend || cooldown > 0) return
     setFormError('')
     const email = values.email.trim()
+    let devCode: string | undefined
     try {
-      await sendCode(email)
+      devCode = await sendCode(email)
     } catch (error) {
       setFormError(describe(error))
       return
     }
     setCooldown(RESEND_SECONDS)
-    setNotice(`A new code is on its way to ${email}.`)
+    setNotice(`A new code is on its way to ${email}.${devHint(devCode)}`)
   }
 
   async function submit(event: FormEvent) {
@@ -139,44 +144,35 @@ export function AuthPage() {
       document.getElementById(`auth-${firstInvalid}`)?.focus()
       return
     }
-    if (!supabase) return
+    if (!authBackend) return
 
     setLoading(true)
     setFormError('')
     const email = values.email.trim()
-    const origin = window.location.origin
 
     try {
       if (mode === 'sign-in') {
-        const { error } = await supabase.auth.signInWithPassword({ email, password: values.password })
-        if (error) {
+        try {
+          await authBackend.signInWithPassword(email, values.password)
+        } catch (error) {
           // Signed up earlier but never entered the code: send a fresh one and continue from there.
-          if (error.code === 'email_not_confirmed') {
-            await sendCode(email)
-            startVerification(email, `Your email isn’t confirmed yet. We sent a new code to ${email}.`)
+          if ((error as { code?: string }).code === 'email_not_confirmed') {
+            const devCode = await sendCode(email)
+            startVerification(email, `Your email isn’t confirmed yet. We sent a new code to ${email}.${devHint(devCode)}`)
             return
           }
           throw error
         }
         // AuthProvider picks up the session and the router sends the user to Games.
       } else if (mode === 'sign-up') {
-        // Step 1: confirm the email. Supabase emails a 6-digit code and creates the user once it is entered.
-        await sendCode(email)
-        startVerification(email, `We sent a 6-digit code to ${email}.`)
+        // Step 1: confirm the email. The API emails a 6-digit code and creates the user once it is entered.
+        const devCode = await sendCode(email)
+        startVerification(email, `We sent a 6-digit code to ${email}.${devHint(devCode)}`)
       } else if (mode === 'verify') {
-        // Our API checks the code, then hands back a one-time token that Supabase turns into a session.
-        const { token_hash } = await api<{ token_hash: string }>('/v1/otp/verify', {
-          method: 'POST',
-          body: JSON.stringify({ email, code: values.code }),
-        })
-        const { error } = await supabase.auth.verifyOtp({ token_hash, type: 'magiclink' })
-        if (error) throw error
+        await authBackend.verifyCode(email, values.code)
         // Step 2 done. The session is set, and the router sends a new user on to choose a username and password.
       } else {
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: `${origin}/reset-password`,
-        })
-        if (error) throw error
+        await authBackend.requestPasswordReset(email)
         setNotice(`If ${email} has an account, a reset link is on its way.`)
       }
     } catch (error) {

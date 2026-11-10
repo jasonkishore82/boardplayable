@@ -1,15 +1,15 @@
 """Email one-time codes for sign-up.
 
-The API makes the 6-digit code, stores only a keyed hash of it in Supabase (table
-`email_otps`, readable by the service role alone), and emails it with Resend. Nothing is kept in
-memory, so it works on serverless hosts such as Vercel.
+The API makes the 6-digit code, stores only a keyed hash of it, and emails it with Resend. The storage is
+pluggable: `HttpGateway` keeps codes in Supabase (table `email_otps`, readable by the service role alone), so
+it works on serverless hosts such as Vercel. `app.local.gateway.SqliteGateway` keeps them in a local SQLite file.
 """
 
 import hashlib
 import hmac
 import secrets
-from datetime import datetime
-from typing import Any
+from datetime import datetime, timedelta, timezone
+from typing import Any, Protocol
 from urllib.parse import quote
 
 import httpx
@@ -20,6 +20,7 @@ from .config import Settings, get_settings
 CODE_TTL_MINUTES = 10
 RESEND_COOLDOWN_SECONDS = 30
 MAX_ATTEMPTS = 5
+BAD_CODE = "That code is wrong or has expired. Request a new one."
 
 
 def new_code() -> str:
@@ -44,6 +45,59 @@ def email_bodies(code: str) -> tuple[str, str]:
     )
     text = f"Your Board Playable code is {code}. It expires in {CODE_TTL_MINUTES} minutes."
     return html, text
+
+
+async def deliver_email(resend_key: str, sender: str, email: str, code: str) -> None:
+    """Send the code with Resend. Raises a 502 when Resend refuses."""
+    html, text = email_bodies(code)
+    async with httpx.AsyncClient(timeout=15) as client:
+        res = await client.post(
+            "https://api.resend.com/emails",
+            headers={"Authorization": f"Bearer {resend_key}", "User-Agent": "boardplayable-api/1.0"},
+            json={"from": sender, "to": [email], "subject": "Your Board Playable code", "html": html, "text": text},
+        )
+    if res.status_code >= 400:
+        raise HTTPException(502, "We couldn't send the email. Try again in a moment.")
+
+
+class OtpGateway(Protocol):
+    def hash(self, email: str, code: str) -> str: ...
+    async def get_record(self, email: str) -> dict[str, Any] | None: ...
+    async def save_record(self, email: str, code_hash: str, expires_at: datetime, sent_at: datetime) -> None: ...
+    async def set_attempts(self, email: str, attempts: int) -> None: ...
+    async def delete_record(self, email: str) -> None: ...
+    async def send_email(self, email: str, code: str) -> None: ...
+
+
+async def issue_code(gateway: OtpGateway, email: str) -> str:
+    """Make a code, store its hash, and email it. Returns the code (the caller must not expose it in production)."""
+    now = datetime.now(timezone.utc)
+    record = await gateway.get_record(email)
+    if record and now - parse_time(record["sent_at"]) < timedelta(seconds=RESEND_COOLDOWN_SECONDS):
+        raise HTTPException(429, "Wait a few seconds before asking for another code.")
+
+    code = new_code()
+    await gateway.save_record(email, gateway.hash(email, code), now + timedelta(minutes=CODE_TTL_MINUTES), now)
+    await gateway.send_email(email, code)
+    return code
+
+
+async def check_code(gateway: OtpGateway, email: str, code: str) -> None:
+    """Raises unless `code` is the live code for `email`. A good code is used up."""
+    now = datetime.now(timezone.utc)
+    record = await gateway.get_record(email)
+    if not record or parse_time(record["expires_at"]) < now:
+        raise HTTPException(400, BAD_CODE)
+
+    attempts = int(record["attempts"])
+    if attempts >= MAX_ATTEMPTS:
+        raise HTTPException(429, "Too many wrong codes. Request a new one.")
+    # Count the try before checking it, so a failed request can't be retried for free.
+    await gateway.set_attempts(email, attempts + 1)
+
+    if not hmac.compare_digest(record["code_hash"], gateway.hash(email, code)):
+        raise HTTPException(400, BAD_CODE)
+    await gateway.delete_record(email)
 
 
 class HttpGateway:
@@ -108,15 +162,7 @@ class HttpGateway:
         res.raise_for_status()
 
     async def send_email(self, email: str, code: str) -> None:
-        html, text = email_bodies(code)
-        res = await self._request(
-            "POST",
-            "https://api.resend.com/emails",
-            headers={"Authorization": f"Bearer {self.resend_key}", "User-Agent": "boardplayable-api/1.0"},
-            json={"from": self.sender, "to": [email], "subject": "Your Board Playable code", "html": html, "text": text},
-        )
-        if res.status_code >= 400:
-            raise HTTPException(502, "We couldn't send the email. Try again in a moment.")
+        await deliver_email(self.resend_key, self.sender, email, code)
 
     async def sign_in_token(self, email: str) -> str:
         """Make sure the user exists (confirmed), then return a one-time token the browser can exchange for a session."""

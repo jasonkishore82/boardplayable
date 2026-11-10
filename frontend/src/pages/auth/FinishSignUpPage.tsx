@@ -5,7 +5,8 @@ import { validatePassword, validateUsername } from '../../auth/validation'
 import { Button } from '../../components/Button'
 import { TextField } from '../../components/TextField'
 import { Wordmark } from '../../components/Wordmark'
-import { supabase } from '../../lib/supabase'
+import { authBackend } from '../../lib/auth'
+import { ApiError } from '../../lib/http'
 import styles from './AuthPage.module.css'
 
 // Step 3 of sign-up. The email is already confirmed with a code; now choose a username and password.
@@ -26,18 +27,18 @@ export function FinishSignUpPage() {
     const name = values.username.trim()
     const next = { username: validateUsername(name), password: validatePassword(values.password, 'sign-up') }
     setErrors(next)
-    if (next.username || next.password || !supabase) {
+    if (next.username || next.password || !authBackend) {
       document.getElementById(next.username ? 'finish-username' : 'finish-password')?.focus()
       return
     }
 
     setLoading(true)
     setFormError('')
-    // Claim the username first. It fails with a duplicate error when the name is taken.
-    const { error: claimError } = await supabase.rpc('complete_signup', { name })
-    if (claimError) {
+    try {
+      await authBackend.completeSignUp(name, values.password)
+    } catch (error) {
       setLoading(false)
-      if (claimError.code === '23505' || claimError.message.toLowerCase().includes('duplicate')) {
+      if (error instanceof ApiError && error.status === 409) {
         setErrors({ username: 'That username is taken.' })
         document.getElementById('finish-username')?.focus()
       } else {
@@ -45,17 +46,7 @@ export function FinishSignUpPage() {
       }
       return
     }
-    const { error: updateError } = await supabase.auth.updateUser({
-      password: values.password,
-      data: { username: name },
-    })
     setLoading(false)
-    if (updateError) {
-      setFormError(
-        updateError.code === 'weak_password' ? 'Choose a stronger password.' : 'Something went wrong. Try again.',
-      )
-      return
-    }
     navigate('/games', { replace: true })
   }
 
