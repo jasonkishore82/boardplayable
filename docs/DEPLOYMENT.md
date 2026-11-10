@@ -19,8 +19,9 @@ No code changes are needed. Everything is set through environment variables.
    - Site URL: `https://boardplayable.site`
    - Redirect URLs: `https://boardplayable.site/**` (keep `http://localhost:5173/**` for local work)
 4. **Authentication > Sign In / Providers > Email**: leave "Confirm email" on for production.
-   Sign-up confirms with a 6-digit code, so also open **Authentication > Emails > Confirm sign up**
-   and make the message body show the code instead of a link, for example:
+   Sign-up is email first: the user enters their email, confirms it with a 6-digit code, then picks a
+   username and password. So open **Authentication > Emails**, and in both the **Confirm sign up** and
+   **Magic link** templates make the message body show the code instead of a link, for example:
 
    ```html
    <h2>Confirm your Board Playable account</h2>

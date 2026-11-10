@@ -23,8 +23,8 @@ const RESEND_SECONDS = 30
 
 const COPY: Record<Mode, { title: string; lede: string; submit: string }> = {
   'sign-in': { title: 'Sign in', lede: 'Welcome back. Your table is waiting.', submit: 'Sign in' },
-  'sign-up': { title: 'Create account', lede: 'Pick a username your friends will know.', submit: 'Create account' },
-  verify: { title: 'Check your email', lede: '', submit: 'Confirm and create account' },
+  'sign-up': { title: 'Create account', lede: 'Start with your email. We’ll send a code to confirm it.', submit: 'Send code' },
+  verify: { title: 'Check your email', lede: '', submit: 'Confirm email' },
   reset: { title: 'Reset password', lede: 'We’ll email you a link to choose a new one.', submit: 'Send link' },
 }
 
@@ -43,7 +43,7 @@ export function AuthPage() {
 
   const fields: Field[] =
     mode === 'sign-up'
-      ? ['email', 'username', 'password']
+      ? ['email']
       : mode === 'reset'
         ? ['email']
         : mode === 'verify'
@@ -105,7 +105,7 @@ export function AuthPage() {
     if (!supabase || cooldown > 0) return
     setFormError('')
     const email = values.email.trim()
-    const { error } = await supabase.auth.resend({ type: 'signup', email })
+    const { error } = await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: true } })
     if (error) {
       setFormError(friendlyAuthError(error))
       return
@@ -138,7 +138,7 @@ export function AuthPage() {
         if (error) {
           // Signed up earlier but never entered the code: send a fresh one and continue from there.
           if (error.code === 'email_not_confirmed') {
-            await supabase.auth.resend({ type: 'signup', email })
+            await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: true } })
             startVerification(email, `Your email isn’t confirmed yet. We sent a new code to ${email}.`)
             return
           }
@@ -146,29 +146,14 @@ export function AuthPage() {
         }
         // AuthProvider picks up the session and the router sends the user to Games.
       } else if (mode === 'sign-up') {
-        const username = values.username.trim()
-        const { data: available, error: rpcError } = await supabase.rpc('username_available', { name: username })
-        if (!rpcError && available === false) {
-          setErrors((e) => ({ ...e, username: 'That username is taken.' }))
-          document.getElementById('auth-username')?.focus()
-          return
-        }
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password: values.password,
-          options: { data: { username }, emailRedirectTo: `${origin}/games` },
-        })
+        // Step 1: confirm the email. Supabase emails a 6-digit code and creates the user once it is entered.
+        const { error } = await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: true } })
         if (error) throw error
-        // An already-confirmed address comes back with no identities and no email is sent.
-        if (data.user && data.user.identities?.length === 0) {
-          setFormError('There’s already an account with this email.')
-          return
-        }
-        if (!data.session) startVerification(email, `We sent a 6-digit code to ${email}.`)
+        startVerification(email, `We sent a 6-digit code to ${email}.`)
       } else if (mode === 'verify') {
-        const { error } = await supabase.auth.verifyOtp({ email, token: values.code, type: 'signup' })
+        const { error } = await supabase.auth.verifyOtp({ email, token: values.code, type: 'email' })
         if (error) throw error
-        // The session is now set; AuthProvider picks it up and the router sends the user to Games.
+        // Step 2 done. The session is set, and the router sends a new user on to choose a username and password.
       } else {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
           redirectTo: `${origin}/reset-password`,
@@ -198,7 +183,7 @@ export function AuthPage() {
           </h1>
           <p className={styles.lede}>
             {mode === 'verify'
-              ? `We sent a 6-digit code to ${values.email.trim()}. Enter it to finish creating your account.`
+              ? `We sent a 6-digit code to ${values.email.trim()}. Enter it to continue.`
               : copy.lede}
           </p>
 
@@ -247,35 +232,17 @@ export function AuthPage() {
               />
             )}
 
-            {mode === 'sign-up' && (
-              <TextField
-                id="auth-username"
-                label="Username"
-                name="username"
-                autoComplete="username"
-                autoCapitalize="none"
-                spellCheck={false}
-                maxLength={20}
-                value={values.username}
-                onChange={(e) => update('username', e.target.value)}
-                onBlur={() => blur('username')}
-                error={errors.username}
-                hint="3–20 characters. Letters, numbers, underscores."
-              />
-            )}
-
-            {mode !== 'reset' && (
+            {mode === 'sign-in' && (
               <TextField
                 id="auth-password"
                 label="Password"
                 type="password"
                 name="password"
-                autoComplete={mode === 'sign-up' ? 'new-password' : 'current-password'}
+                autoComplete="current-password"
                 value={values.password}
                 onChange={(e) => update('password', e.target.value)}
                 onBlur={() => blur('password')}
                 error={errors.password}
-                hint={mode === 'sign-up' ? 'At least 8 characters.' : undefined}
                 trailing={
                   mode === 'sign-in' && (
                     <Button type="button" variant="quiet" className={styles.inlineLink} onClick={() => switchMode('reset')}>

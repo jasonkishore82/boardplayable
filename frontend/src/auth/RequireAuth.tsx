@@ -3,11 +3,13 @@ import { useAuth } from './AuthProvider'
 
 // Signed-out users always go back to sign-in, remembering where they were headed.
 export function RequireAuth() {
-  const { session, loading } = useAuth()
+  const { session, username, loading } = useAuth()
   const location = useLocation()
 
   if (loading) return null
   if (!session) return <Navigate to="/sign-in" replace state={{ from: location.pathname }} />
+  // Email confirmed but no username yet: finish sign-up first.
+  if (!username) return <Navigate to="/finish-signup" replace />
   return <Outlet />
 }
 

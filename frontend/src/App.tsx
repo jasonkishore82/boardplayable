@@ -7,6 +7,7 @@ import { GamesPage } from './features/games/GamesPage'
 import { ProfilePage } from './features/profile/ProfilePage'
 import { missingEnv } from './lib/env'
 import { AuthPage } from './pages/auth/AuthPage'
+import { FinishSignUpPage } from './pages/auth/FinishSignUpPage'
 import { ResetPasswordPage } from './pages/auth/ResetPasswordPage'
 import { SetupNotice } from './pages/SetupNotice'
 import { AppShell } from './shell/AppShell'
@@ -21,6 +22,7 @@ export function App() {
           <Route path="/sign-in" element={<AuthPage />} />
         </Route>
         <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/finish-signup" element={<FinishSignUpPage />} />
 
         <Route element={<RequireAuth />}>
           <Route element={<AppShell />}>
