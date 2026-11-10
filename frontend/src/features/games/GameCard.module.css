@@ -1,0 +1,82 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: var(--space-5);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  text-decoration: none;
+  transition:
+    border-color var(--duration) var(--ease),
+    transform var(--duration) var(--ease);
+}
+
+.card:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+}
+
+.card:focus-visible {
+  outline-offset: 3px;
+}
+
+.top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: var(--space-6);
+}
+
+.glyph {
+  display: flex;
+  color: var(--accent);
+}
+
+.badge {
+  padding: 2px var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.name {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.description {
+  margin-top: var(--space-1);
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.players {
+  margin-top: auto;
+  padding-top: var(--space-4);
+  font-size: 13px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 719px) {
+  .card {
+    padding: var(--space-4) var(--space-5);
+  }
+  .top {
+    margin-bottom: var(--space-3);
+  }
+  .glyph svg {
+    width: 40px;
+    height: 40px;
+  }
+  .players {
+    padding-top: var(--space-3);
+  }
+}

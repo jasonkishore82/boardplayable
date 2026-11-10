@@ -1,0 +1,14 @@
+.header {
+  margin-bottom: var(--space-7);
+}
+
+.sub {
+  margin-top: var(--space-2);
+  color: var(--text-muted);
+}
+
+@media (max-width: 719px) {
+  .header {
+    margin-bottom: var(--space-6);
+  }
+}
