@@ -1,0 +1,17 @@
+.layout {
+  display: grid;
+  gap: var(--space-7);
+}
+
+@media (min-width: 880px) {
+  .layout {
+    grid-template-columns: 1.6fr 1fr;
+    gap: var(--space-8);
+  }
+}
+
+.add {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
