@@ -12,3 +12,5 @@ __pycache__
 *.tsbuildinfo
 local.db
 local.db-*
+
+deploy/.env

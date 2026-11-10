@@ -1,0 +1,9 @@
+# HTTPS in front of the API. API_DOMAIN comes from deploy/.env (for example api.boardplayable.site).
+# Caddy requests and renews the certificate by itself. Ports 80 and 443 must be open and the domain's
+# DNS A record must point at this server.
+{$API_DOMAIN} {
+	encode zstd gzip
+
+	# WebSocket upgrades (/v1/rooms/...) are forwarded automatically.
+	reverse_proxy api:8000
+}

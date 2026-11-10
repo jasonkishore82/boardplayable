@@ -1,0 +1,44 @@
+# Run the Board Playable API, with WebSockets and automatic HTTPS, on any server that has Docker.
+#
+#   cd deploy
+#   cp .env.example .env      # then fill it in
+#   docker compose up -d --build
+#
+# See docs/SERVER.md for the full walk-through.
+
+services:
+  api:
+    build: ../backend
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      # Never run the SQLite test mode on a server.
+      LOCAL_MODE: "false"
+      PORT: "8000"
+    # Reachable from this server only (handy for `curl http://127.0.0.1:8000/health`).
+    # The outside world goes through Caddy below.
+    ports:
+      - "127.0.0.1:8000:8000"
+
+  # Caddy gets a free HTTPS certificate for API_DOMAIN and forwards traffic to the API.
+  # It passes WebSocket connections through with no extra settings.
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      API_DOMAIN: ${API_DOMAIN:?Set API_DOMAIN in deploy/.env}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:
