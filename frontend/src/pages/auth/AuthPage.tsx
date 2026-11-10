@@ -1,6 +1,8 @@
 import { lazy, Suspense, useEffect, useRef, useState, type FormEvent } from 'react'
 import {
   friendlyAuthError,
+  normalizeCode,
+  validateCode,
   validateEmail,
   validatePassword,
   validateUsername,
@@ -15,28 +17,45 @@ import styles from './AuthPage.module.css'
 
 const PieceScene = lazy(() => import('../../three/PieceScene'))
 
-type Mode = 'sign-in' | 'sign-up' | 'reset'
+type Mode = 'sign-in' | 'sign-up' | 'reset' | 'verify'
+
+const RESEND_SECONDS = 30
 
 const COPY: Record<Mode, { title: string; lede: string; submit: string }> = {
   'sign-in': { title: 'Sign in', lede: 'Welcome back. Your table is waiting.', submit: 'Sign in' },
   'sign-up': { title: 'Create account', lede: 'Pick a username your friends will know.', submit: 'Create account' },
+  verify: { title: 'Check your email', lede: '', submit: 'Confirm and create account' },
   reset: { title: 'Reset password', lede: 'We’ll email you a link to choose a new one.', submit: 'Send link' },
 }
 
 export function AuthPage() {
   const [mode, setMode] = useState<Mode>('sign-in')
-  const [values, setValues] = useState({ email: '', username: '', password: '' })
+  const [values, setValues] = useState({ email: '', username: '', password: '', code: '' })
   const [errors, setErrors] = useState<Errors>({})
   const [touched, setTouched] = useState<Partial<Record<Field, boolean>>>({})
   const [formError, setFormError] = useState('')
   const [notice, setNotice] = useState('')
   const [loading, setLoading] = useState(false)
+  const [cooldown, setCooldown] = useState(0)
   const headingRef = useRef<HTMLHeadingElement>(null)
   const lastMode = useRef(mode)
   const wide = useMediaQuery('(min-width: 960px)')
 
   const fields: Field[] =
-    mode === 'sign-up' ? ['email', 'username', 'password'] : mode === 'reset' ? ['email'] : ['email', 'password']
+    mode === 'sign-up'
+      ? ['email', 'username', 'password']
+      : mode === 'reset'
+        ? ['email']
+        : mode === 'verify'
+          ? ['code']
+          : ['email', 'password']
+
+  // Counts down the "Send a new code" button.
+  useEffect(() => {
+    if (cooldown <= 0) return
+    const timer = window.setTimeout(() => setCooldown((c) => c - 1), 1000)
+    return () => window.clearTimeout(timer)
+  }, [cooldown])
 
   // Move focus to the heading when the form changes mode, so screen readers announce it.
   useEffect(() => {
@@ -48,11 +67,13 @@ export function AuthPage() {
   function validate(field: Field, value: string): string | undefined {
     if (field === 'email') return validateEmail(value)
     if (field === 'username') return validateUsername(value)
+    if (field === 'code') return validateCode(value)
     return validatePassword(value, mode === 'sign-up' ? 'sign-up' : 'sign-in')
   }
 
   function update(field: Field, value: string) {
-    const next = field === 'username' ? value.toLowerCase() : value
+    const next =
+      field === 'username' ? value.toLowerCase() : field === 'code' ? normalizeCode(value) : value
     setValues((v) => ({ ...v, [field]: next }))
     if (touched[field]) setErrors((e) => ({ ...e, [field]: validate(field, next) }))
     setFormError('')
@@ -70,7 +91,27 @@ export function AuthPage() {
     setTouched({})
     setFormError('')
     setNotice('')
-    setValues((v) => ({ ...v, password: '' }))
+    setValues((v) => ({ ...v, password: '', code: '' }))
+  }
+
+  function startVerification(email: string, message: string) {
+    switchMode('verify')
+    setNotice(message)
+    setCooldown(RESEND_SECONDS)
+    setValues((v) => ({ ...v, email }))
+  }
+
+  async function resendCode() {
+    if (!supabase || cooldown > 0) return
+    setFormError('')
+    const email = values.email.trim()
+    const { error } = await supabase.auth.resend({ type: 'signup', email })
+    if (error) {
+      setFormError(friendlyAuthError(error))
+      return
+    }
+    setCooldown(RESEND_SECONDS)
+    setNotice(`A new code is on its way to ${email}.`)
   }
 
   async function submit(event: FormEvent) {
@@ -94,7 +135,15 @@ export function AuthPage() {
     try {
       if (mode === 'sign-in') {
         const { error } = await supabase.auth.signInWithPassword({ email, password: values.password })
-        if (error) throw error
+        if (error) {
+          // Signed up earlier but never entered the code: send a fresh one and continue from there.
+          if (error.code === 'email_not_confirmed') {
+            await supabase.auth.resend({ type: 'signup', email })
+            startVerification(email, `Your email isn’t confirmed yet. We sent a new code to ${email}.`)
+            return
+          }
+          throw error
+        }
         // AuthProvider picks up the session and the router sends the user to Games.
       } else if (mode === 'sign-up') {
         const username = values.username.trim()
@@ -110,10 +159,16 @@ export function AuthPage() {
           options: { data: { username }, emailRedirectTo: `${origin}/games` },
         })
         if (error) throw error
-        if (!data.session) {
-          switchMode('sign-in')
-          setNotice(`Check ${email} to confirm your account, then sign in.`)
+        // An already-confirmed address comes back with no identities and no email is sent.
+        if (data.user && data.user.identities?.length === 0) {
+          setFormError('There’s already an account with this email.')
+          return
         }
+        if (!data.session) startVerification(email, `We sent a 6-digit code to ${email}.`)
+      } else if (mode === 'verify') {
+        const { error } = await supabase.auth.verifyOtp({ email, token: values.code, type: 'signup' })
+        if (error) throw error
+        // The session is now set; AuthProvider picks it up and the router sends the user to Games.
       } else {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
           redirectTo: `${origin}/reset-password`,
@@ -141,21 +196,56 @@ export function AuthPage() {
           <h1 ref={headingRef} tabIndex={-1} className={styles.title}>
             {copy.title}
           </h1>
-          <p className={styles.lede}>{copy.lede}</p>
+          <p className={styles.lede}>
+            {mode === 'verify'
+              ? `We sent a 6-digit code to ${values.email.trim()}. Enter it to finish creating your account.`
+              : copy.lede}
+          </p>
 
           <form className={styles.form} onSubmit={submit} noValidate key={mode}>
-            <TextField
-              id="auth-email"
-              label="Email"
-              type="email"
-              name="email"
-              autoComplete="email"
-              inputMode="email"
-              value={values.email}
-              onChange={(e) => update('email', e.target.value)}
-              onBlur={() => blur('email')}
-              error={errors.email}
-            />
+            {mode !== 'verify' && (
+              <TextField
+                id="auth-email"
+                label="Email"
+                type="email"
+                name="email"
+                autoComplete="email"
+                inputMode="email"
+                value={values.email}
+                onChange={(e) => update('email', e.target.value)}
+                onBlur={() => blur('email')}
+                error={errors.email}
+              />
+            )}
+
+            {mode === 'verify' && (
+              <TextField
+                id="auth-code"
+                label="6-digit code"
+                name="code"
+                autoComplete="one-time-code"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={6}
+                autoFocus
+                value={values.code}
+                onChange={(e) => update('code', e.target.value)}
+                onBlur={() => blur('code')}
+                error={errors.code}
+                hint="Codes expire after an hour."
+                trailing={
+                  <Button
+                    type="button"
+                    variant="quiet"
+                    className={styles.inlineLink}
+                    onClick={resendCode}
+                    disabled={cooldown > 0}
+                  >
+                    {cooldown > 0 ? `Send a new code (${cooldown}s)` : 'Send a new code'}
+                  </Button>
+                }
+              />
+            )}
 
             {mode === 'sign-up' && (
               <TextField
@@ -211,7 +301,14 @@ export function AuthPage() {
           </form>
 
           <p className={styles.switch}>
-            {mode === 'sign-in' ? (
+            {mode === 'verify' ? (
+              <>
+                Wrong email?{' '}
+                <Button type="button" variant="quiet" onClick={() => switchMode('sign-up')}>
+                  Start over
+                </Button>
+              </>
+            ) : mode === 'sign-in' ? (
               <>
                 New here?{' '}
                 <Button type="button" variant="quiet" onClick={() => switchMode('sign-up')}>

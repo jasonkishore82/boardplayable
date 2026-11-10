@@ -1,10 +1,11 @@
-export type Field = 'email' | 'username' | 'password'
+export type Field = 'email' | 'username' | 'password' | 'code'
 export type Errors = Partial<Record<Field, string>>
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const USERNAME = /^[a-z0-9_]{3,20}$/
 
 export const PASSWORD_MIN = 8
+export const OTP_LENGTH = 6
 
 export function validateEmail(value: string): string | undefined {
   if (!value.trim()) return 'Enter your email.'
@@ -19,6 +20,16 @@ export function validateUsername(value: string): string | undefined {
   if (!USERNAME.test(v)) return 'Use lowercase letters, numbers and underscores.'
 }
 
+// Keeps digits only, so pasted codes like "123 456" still work.
+export function normalizeCode(value: string): string {
+  return value.replace(/\D/g, '').slice(0, OTP_LENGTH)
+}
+
+export function validateCode(value: string): string | undefined {
+  if (!value) return 'Enter the 6-digit code.'
+  if (value.length < OTP_LENGTH) return `The code has ${OTP_LENGTH} digits.`
+}
+
 export function validatePassword(value: string, mode: 'sign-in' | 'sign-up'): string | undefined {
   if (!value) return 'Enter your password.'
   if (mode === 'sign-up' && value.length < PASSWORD_MIN)
@@ -30,10 +41,12 @@ export function friendlyAuthError(error: { message?: string; code?: string; stat
   const code = error.code ?? ''
   const msg = (error.message ?? '').toLowerCase()
 
+  if (code === 'otp_expired' || msg.includes('token has expired') || msg.includes('otp'))
+    return 'That code is wrong or has expired. Request a new one.'
   if (code === 'invalid_credentials' || msg.includes('invalid login credentials'))
     return 'That email and password don’t match.'
   if (code === 'email_not_confirmed' || msg.includes('email not confirmed'))
-    return 'Confirm your email first. Check your inbox for the link.'
+    return 'Confirm your email first. Enter the code we sent you.'
   if (code === 'user_already_exists' || msg.includes('already registered'))
     return 'There’s already an account with this email.'
   if (code === 'weak_password' || msg.includes('password should'))

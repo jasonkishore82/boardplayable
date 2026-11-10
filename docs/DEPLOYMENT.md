@@ -19,9 +19,19 @@ No code changes are needed. Everything is set through environment variables.
    - Site URL: `https://boardplayable.site`
    - Redirect URLs: `https://boardplayable.site/**` (keep `http://localhost:5173/**` for local work)
 4. **Authentication > Sign In / Providers > Email**: leave "Confirm email" on for production.
-   The sign-up form handles both cases.
-5. Optional, recommended before launch: **Authentication > Emails > SMTP Settings**. Supabase's
-   built-in sender is rate-limited and meant for testing.
+   Sign-up confirms with a 6-digit code, so also open **Authentication > Emails > Confirm sign up**
+   and make the message body show the code instead of a link, for example:
+
+   ```html
+   <h2>Confirm your Board Playable account</h2>
+   <p>Your code is:</p>
+   <p style="font-size:28px;letter-spacing:6px"><strong>{{ .Token }}</strong></p>
+   <p>It expires in an hour. If you didn't sign up, ignore this email.</p>
+   ```
+
+   Under **Sign In / Providers > Email**, "Email OTP Length" must be 6 (the default).
+5. Before launch, switch auth emails to Resend (see **Email (Resend)** below). Supabase's
+   built-in sender is capped at a few messages an hour and is meant for testing only.
 6. Note these from **Project Settings > API** (or **API Keys**):
    - Project URL
    - Public key (`anon` or `sb_publishable_...`), for the front end
@@ -29,6 +39,41 @@ No code changes are needed. Everything is set through environment variables.
      copy that secret for the API. Projects on the newer signing keys don't need it.
 
 Never put the service role / secret key in the front end.
+
+## 1b. Email (Resend)
+
+Supabase sends sign-up confirmations and password resets by email. Its built-in sender is
+rate-limited, so production uses [Resend](https://resend.com) over SMTP. The free tier
+(3,000 emails a month) is plenty to start.
+
+1. Create an account at resend.com, then **Domains > Add Domain**. Enter `boardplayable.site`.
+   Pick the region closest to your Supabase project.
+2. Resend shows DNS records to add at the registrar. Add them (see the GoDaddy table in step 4):
+   - a TXT record for DKIM at `resend._domainkey`
+   - an MX and a TXT (SPF) record on the `send` subdomain
+   - optionally a TXT at `_dmarc` with `v=DMARC1; p=none;`
+   Click **Verify**. It usually passes within a few minutes of the records propagating.
+3. **API Keys > Create API Key**. Name it `supabase-auth`, permission **Sending access**,
+   domain `boardplayable.site`. Copy the key; it is shown once.
+4. In Supabase, **Authentication > Emails > SMTP Settings**, turn on **Enable Custom SMTP**:
+
+   | Field          | Value                           |
+   | -------------- | ------------------------------- |
+   | Sender email   | `noreply@boardplayable.site`    |
+   | Sender name    | `Board Playable`                |
+   | Host           | `smtp.resend.com`               |
+   | Port           | `465`                           |
+   | Username       | `resend`                        |
+   | Password       | the API key from step 3         |
+
+   Save. The sender address must be on the verified domain; the mailbox does not need to exist.
+5. Still under **Authentication**, open **Rate Limits** and raise the email limit from the default
+   (a few per hour) to something sensible, e.g. 100 per hour. Supabase only allows this once
+   custom SMTP is on.
+6. Test: use **Forgot password** on the live site. The email should arrive within seconds from
+   `noreply@boardplayable.site`, and the Resend dashboard (**Emails**) lists it as delivered.
+
+The API never sends email itself, so nothing changes in `backend/`.
 
 ## 2. API (Docker)
 
@@ -84,6 +129,16 @@ WebSockets: rooms live at `wss://<api>/v1/rooms/<id>`. Pick a host that supports
    If Vercel shows different values for your project, use those.
    Or move nameservers to Vercel and it manages the records for you.
 3. Add the API record too (from step 2), e.g. CNAME `api` → your API host.
+   And the Resend records (from step 1b). Resend shows the exact values; they look like:
+
+   | Type | Name                | Value                                          |
+   | ---- | ------------------- | ---------------------------------------------- |
+   | TXT  | `resend._domainkey` | `p=MIGf...` (DKIM public key)                  |
+   | MX   | `send`              | `feedback-smtp.<region>.amazonses.com`, priority 10 |
+   | TXT  | `send`              | `v=spf1 include:amazonses.com ~all`            |
+   | TXT  | `_dmarc`            | `v=DMARC1; p=none;`                            |
+
+   GoDaddy wants the **Name** without the domain (type `send`, not `send.boardplayable.site`).
 4. Wait for DNS (minutes, sometimes hours). Vercel issues HTTPS automatically.
 
 ## Checklist after deploying
@@ -94,5 +149,6 @@ WebSockets: rooms live at `wss://<api>/v1/rooms/<id>`. Pick a host that supports
 - After signing in you land on Games.
 - Forgot password sends an email; the link opens `/reset-password`.
 - `https://api.boardplayable.site/health` returns ok.
+- Auth emails arrive from `noreply@boardplayable.site` and show as delivered in Resend.
 - In the browser console on the live site, there are no CORS errors calling the API.
   (If there are, check `CORS_ORIGINS` matches the site's origin exactly, with no trailing slash.)
