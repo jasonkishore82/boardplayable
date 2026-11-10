@@ -15,6 +15,15 @@ class Settings(BaseSettings):
     supabase_jwt_secret: str = ""
     supabase_jwt_audience: str = "authenticated"
 
+    # Server-side only. Lets the API create users and store sign-up codes. Never expose it to the browser.
+    supabase_service_role_key: str = ""
+
+    # Resend sends the sign-up code emails.
+    resend_api_key: str = ""
+    resend_from_email: str = "Board Playable <noreply@boardplayable.site>"
+    # Key for hashing codes. Defaults to the service role key when empty.
+    otp_secret: str = ""
+
     # Comma-separated list of front-end origins allowed to call the API.
     cors_origins: str = ""
 

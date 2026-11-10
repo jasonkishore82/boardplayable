@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useRef, useState, type FormEvent } from 'react'
 import {
+  friendlyApiError,
   friendlyAuthError,
   normalizeCode,
   validateCode,
@@ -12,6 +13,7 @@ import {
 import { Button } from '../../components/Button'
 import { TextField } from '../../components/TextField'
 import { Wordmark } from '../../components/Wordmark'
+import { api, ApiError } from '../../lib/api'
 import { supabase } from '../../lib/supabase'
 import styles from './AuthPage.module.css'
 
@@ -101,13 +103,25 @@ export function AuthPage() {
     setValues((v) => ({ ...v, email }))
   }
 
+  // Asks our API to email a 6-digit code.
+  function sendCode(email: string) {
+    return api('/v1/otp/send', { method: 'POST', body: JSON.stringify({ email }) })
+  }
+
+  function describe(error: unknown): string {
+    return error instanceof ApiError
+      ? friendlyApiError(error)
+      : friendlyAuthError(error as { message?: string })
+  }
+
   async function resendCode() {
     if (!supabase || cooldown > 0) return
     setFormError('')
     const email = values.email.trim()
-    const { error } = await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: true } })
-    if (error) {
-      setFormError(friendlyAuthError(error))
+    try {
+      await sendCode(email)
+    } catch (error) {
+      setFormError(describe(error))
       return
     }
     setCooldown(RESEND_SECONDS)
@@ -138,7 +152,7 @@ export function AuthPage() {
         if (error) {
           // Signed up earlier but never entered the code: send a fresh one and continue from there.
           if (error.code === 'email_not_confirmed') {
-            await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: true } })
+            await sendCode(email)
             startVerification(email, `Your email isn’t confirmed yet. We sent a new code to ${email}.`)
             return
           }
@@ -147,11 +161,15 @@ export function AuthPage() {
         // AuthProvider picks up the session and the router sends the user to Games.
       } else if (mode === 'sign-up') {
         // Step 1: confirm the email. Supabase emails a 6-digit code and creates the user once it is entered.
-        const { error } = await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: true } })
-        if (error) throw error
+        await sendCode(email)
         startVerification(email, `We sent a 6-digit code to ${email}.`)
       } else if (mode === 'verify') {
-        const { error } = await supabase.auth.verifyOtp({ email, token: values.code, type: 'email' })
+        // Our API checks the code, then hands back a one-time token that Supabase turns into a session.
+        const { token_hash } = await api<{ token_hash: string }>('/v1/otp/verify', {
+          method: 'POST',
+          body: JSON.stringify({ email, code: values.code }),
+        })
+        const { error } = await supabase.auth.verifyOtp({ token_hash, type: 'magiclink' })
         if (error) throw error
         // Step 2 done. The session is set, and the router sends a new user on to choose a username and password.
       } else {
@@ -162,7 +180,7 @@ export function AuthPage() {
         setNotice(`If ${email} has an account, a reset link is on its way.`)
       }
     } catch (error) {
-      setFormError(friendlyAuthError(error as { message?: string }))
+      setFormError(describe(error))
     } finally {
       setLoading(false)
     }

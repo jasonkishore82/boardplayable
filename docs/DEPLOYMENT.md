@@ -100,6 +100,32 @@ the DNS record it shows you (usually a CNAME for `api`).
 WebSockets: rooms live at `wss://<api>/v1/rooms/<id>`. Pick a host that supports WebSockets
 (all of the above do). Room state is in memory, so run a single instance until a shared broker is added.
 
+## 2b. API on Vercel (sign-up codes)
+
+The 6-digit sign-up code is made and emailed by the Python API, not by Supabase. Vercel can host it as a
+second project next to the front end. `backend/index.py` is the entry point it looks for.
+
+1. In Supabase, run `supabase/migrations/20261110030000_email_otps.sql`. It creates the table that holds the
+   hashed codes, locked so only the API can use it.
+2. In Vercel: **Add New > Project**, import the same repo, set **Root Directory** to `backend`.
+3. **Environment Variables** (Production):
+   ```
+   SUPABASE_URL=https://<ref>.supabase.co
+   SUPABASE_SERVICE_ROLE_KEY=<service_role key>   # Project Settings > API Keys. Secret: server only.
+   RESEND_API_KEY=<Resend key>
+   RESEND_FROM_EMAIL=Board Playable <noreply@boardplayable.site>
+   CORS_ORIGINS=https://boardplayable.site,https://www.boardplayable.site
+   ```
+4. Deploy, then **Settings > Domains** and add `api.boardplayable.site`. Add the CNAME that Vercel shows at
+   your registrar.
+5. Open `https://api.boardplayable.site/health`. It should return `{"status":"ok"}`.
+
+The service role key can create and delete any user. Keep it in Vercel's environment variables only. Never put
+it in the front end, in Git, or in a `VITE_` variable.
+
+Vercel does not support WebSockets, so live game rooms (`/v1/rooms`) need another host later. Sign-up codes
+need only plain HTTP and work fine here.
+
 ## 3. Front end (Vercel)
 
 1. **Add New > Project**, import the repo.
