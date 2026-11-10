@@ -1,0 +1,22 @@
+.groups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-7);
+}
+
+.groupTitle {
+  margin-bottom: var(--space-4);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.grid > li {
+  display: flex;
+}
