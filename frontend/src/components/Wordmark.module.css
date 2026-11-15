@@ -1,13 +1,47 @@
 .wordmark {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
-  font-size: 17px;
-  font-weight: 600;
-  letter-spacing: 0.01em;
+  gap: var(--space-3);
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1;
 }
 
 .mark {
-  color: var(--text);
   flex: none;
+  filter: drop-shadow(0 2px 6px rgb(227 18 63 / 0.35));
+}
+
+.name {
+  white-space: nowrap;
+}
+
+/* The monogram's two colours, as gradients clipped to the letters. */
+.board,
+.playable {
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+.board {
+  background-image: linear-gradient(180deg, #ff5a6e, #e3123f);
+}
+
+.playable {
+  background-image: linear-gradient(180deg, #b57cff, #7433d6);
+}
+
+/* Dark mode: a touch brighter, so the purple holds up on the dark background. */
+:global([data-theme='dark']) .playable,
+:global(:root:not([data-theme='light'])) .playable {
+  background-image: linear-gradient(180deg, #c99bff, #8a4dff);
+}
+
+@media (max-width: 719px) {
+  .wordmark {
+    gap: var(--space-2);
+    font-size: 19px;
+  }
 }

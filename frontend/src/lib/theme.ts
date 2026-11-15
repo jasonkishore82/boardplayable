@@ -7,7 +7,8 @@ const listeners = new Set<() => void>()
 
 // index.html sets data-theme on <html> before the page paints, so this only reads it back.
 export function getTheme(): Theme {
-  return document.documentElement.dataset.theme === 'light' ? 'light' : 'dark'
+  // Light is the default (see index.html); dark only when chosen.
+  return document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light'
 }
 
 export function setTheme(theme: Theme): void {
@@ -26,6 +27,6 @@ function subscribe(listener: () => void) {
 }
 
 export function useTheme(): [Theme, (theme: Theme) => void] {
-  const theme = useSyncExternalStore(subscribe, getTheme, () => 'dark' as Theme)
+  const theme = useSyncExternalStore(subscribe, getTheme, () => 'light' as Theme)
   return [theme, setTheme]
 }

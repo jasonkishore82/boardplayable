@@ -1,1 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="74 39 528 532"><rect x="80" y="45" width="516" height="520" rx="82" fill="#2a2c31"/><circle cx="238" cy="228" r="88" fill="#c9785d"/><circle cx="234" cy="428" r="89" fill="#84a08f"/><circle cx="455" cy="220" r="88" fill="#d6a85c"/><circle cx="455" cy="217" r="43" fill="#2a2c31"/><path d="M367 220 V509 H520 C470 488 424 466 408 410 C394 360 376 290 367 220 Z" fill="#e6dfd1"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="298" height="298" viewBox="-49 -14 298 298">
+  <defs>
+    <linearGradient id="red" x1="0" y1="0" x2="0.4" y2="1"><stop offset="0" stop-color="#ff5a6e"/><stop offset="1" stop-color="#e3123f"/></linearGradient>
+    <linearGradient id="purple" x1="0" y1="0" x2="0.3" y2="1"><stop offset="0" stop-color="#b57cff"/><stop offset="1" stop-color="#7433d6"/></linearGradient>
+    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#262a36"/><stop offset="1" stop-color="#15171f"/></linearGradient>
+  </defs>
+  <rect x="-45" y="-10" width="290" height="290" rx="64" fill="url(#tile)"/>
+  <g transform="translate(-3 0)">
+    <path d="M100 20A60 60 0 0 0 100 140L100 125.83A46 46 0 0 1 100 34.17Z" fill="url(#red)"/>
+    <path d="M100 140A55 55 0 0 0 100 250L100 236.81A42 42 0 0 1 100 153.19Z" fill="url(#red)"/>
+    <rect x="93" y="20" width="7" height="230" rx="3.5" fill="url(#red)"/>
+  </g>
+  <g transform="translate(3 0)">
+    <path d="M100 20A60 60 0 0 1 100 140L100 125.83A46 46 0 0 0 100 34.17Z" fill="url(#purple)"/>
+    <rect x="100" y="20" width="7" height="230" rx="3.5" fill="url(#purple)"/>
+  </g>
+</svg>

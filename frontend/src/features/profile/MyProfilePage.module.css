@@ -263,6 +263,14 @@ button.count:hover dt {
   color: var(--text);
 }
 
+/* Beside the sidebar the sheet fills the window's height (the page area has 12px above and below it). */
+@media (min-width: 720px) {
+  .sheet {
+    box-sizing: border-box;
+    min-height: calc(100dvh - 2 * var(--space-3));
+  }
+}
+
 @media (max-width: 719px) {
   .sheet {
     padding: var(--space-5) var(--space-4);

@@ -1,5 +1,7 @@
 node_modules
 dist
+# self-signed certificate made by the phone-controller relay (frontend/server/controllerRelay.mjs)
+.cert
 .env
 .env.local
 .env.*.local

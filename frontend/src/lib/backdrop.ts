@@ -4,10 +4,12 @@ import { useSyncExternalStore } from 'react'
 // device, like the theme.
 // To add a picture: put the file in public/backgrounds/ and add a line to BACKDROPS.
 
-export type BackdropOption = { id: string; name: string; src: string | null }
+/** `aurora` is the animated brand backdrop, drawn in CSS rather than from a picture. */
+export type BackdropOption = { id: string; name: string; src: string | null; aurora?: boolean }
 
 export const BACKDROPS: BackdropOption[] = [
   { id: 'none', name: 'None', src: null },
+  { id: 'aurora', name: 'Aurora', src: null, aurora: true },
   { id: 'dusk', name: 'Dusk city', src: '/backgrounds/chess-dusk.webp' },
 ]
 
@@ -18,13 +20,16 @@ export type Backdrop = {
   id: string
   /** The picture to show, or null for no backdrop. */
   src: string | null
+  /** The animated aurora in the logo's colours, instead of a picture. */
+  aurora: boolean
   /** The uploaded picture (a data URL), kept even while another backdrop is chosen. */
   custom: string | null
 }
 
 const KEY = 'backdrop'
 const CUSTOM_KEY = 'backdrop-custom'
-const DEFAULT_ID = 'dusk'
+// Plain dark by default; the animated aurora is still offered in Profile.
+const DEFAULT_ID = 'none'
 const listeners = new Set<() => void>()
 
 function read(key: string): string | null {
@@ -36,9 +41,9 @@ function read(key: string): string | null {
 }
 
 function resolve(id: string | null, custom: string | null): Backdrop {
-  if (id === CUSTOM_ID && custom) return { id: CUSTOM_ID, src: custom, custom }
+  if (id === CUSTOM_ID && custom) return { id: CUSTOM_ID, src: custom, aurora: false, custom }
   const option = BACKDROPS.find((o) => o.id === id) ?? BACKDROPS.find((o) => o.id === DEFAULT_ID)!
-  return { id: option.id, src: option.src, custom }
+  return { id: option.id, src: option.src, aurora: !!option.aurora, custom }
 }
 
 let current = resolve(read(KEY), read(CUSTOM_KEY))

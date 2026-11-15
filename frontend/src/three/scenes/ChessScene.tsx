@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { PromotionPicker } from '../../games/engines/chess/Promotion'
 import { isPromotion, lostPieces, myColor, type ChessState } from '../../games/engines/chess/rules'
 import { GameCanvas } from '../GameCanvas'
+import { CHESS, Chessboard } from './chessboard/Chessboard'
 import { Piece, usePieceMaterials } from './chessPieces'
 import { CameraRig, COLORS, Floor, SceneLights, type SceneProps } from './shared'
 
@@ -12,7 +13,11 @@ const FILES = 'abcdefgh'
 const squareXZ = (square: string): [number, number] => [FILES.indexOf(square[0]) - 3.5, 4.5 - Number(square[1])]
 
 const ALL_SQUARES = FILES.split('').flatMap((file) => [1, 2, 3, 4, 5, 6, 7, 8].map((rank) => `${file}${rank}`))
-const isDarkSquare = (square: string) => (FILES.indexOf(square[0]) + Number(square[1])) % 2 === 1
+
+// The wooden board is modelled in metres; scaled so one square is one scene unit, its veneer at y = 0.
+const BOARD_SCALE = 1 / CHESS.cell
+const BOARD_Y = -CHESS.top * BOARD_SCALE
+const FLOOR_Y = BOARD_Y - 0.004
 
 /** A chess board in 3D. In 3D view you can play on it; in cinematic view it is for watching. */
 export default function ChessScene({ game: raw, myId, send, mode }: SceneProps) {
@@ -85,24 +90,20 @@ export default function ChessScene({ game: raw, myId, send, mode }: SceneProps) 
       <GameCanvas camera={{ position: [0, 9, 10], fov: 38 }}>
       <fog attach="fog" args={['#ffffff', 18, 34]} />
       <SceneLights mode={mode} />
-      <Floor />
+      <Floor y={FLOOR_Y} />
       <CameraRig mode={mode} flipped={flipped} focus={focus} distance={9.6} />
 
-      {/* The frame and the 64 squares. */}
-      <mesh position={[0, -0.16, 0]} receiveShadow castShadow>
-        <boxGeometry args={[9.1, 0.3, 9.1]} />
-        <meshStandardMaterial color={COLORS.frame} roughness={0.35} metalness={0.5} />
-      </mesh>
+      {/* The inlaid wooden board: walnut and maple veneer in a mitred, lacquered frame. */}
+      <group position-y={BOARD_Y} scale={BOARD_SCALE}>
+        <Chessboard />
+      </group>
+      {/* The 64 squares you click: invisible, lying just on the veneer. */}
       {ALL_SQUARES.map((square) => {
         const [x, z] = squareXZ(square)
         return (
-          <mesh key={square} position={[x, -0.06, z]} receiveShadow {...handlers(square)}>
-            <boxGeometry args={[0.99, 0.12, 0.99]} />
-            <meshStandardMaterial
-              color={isDarkSquare(square) ? COLORS.dark : COLORS.light}
-              roughness={0.4}
-              metalness={0.15}
-            />
+          <mesh key={square} position={[x, 0.002, z]} rotation-x={-Math.PI / 2} {...handlers(square)}>
+            <planeGeometry args={[1, 1]} />
+            <meshBasicMaterial transparent opacity={0} depthWrite={false} />
           </mesh>
         )
       })}
@@ -160,7 +161,7 @@ function Captured({ game, materials }: { game: ChessState; materials: ReturnType
           const column = i % 2
           const row = Math.floor(i / 2)
           // Rows run from white's end of the board toward black's.
-          const position: [number, number, number] = [x + (x < 0 ? -column : column) * 0.85, 0, 3.6 - row * 0.9]
+          const position: [number, number, number] = [x + (x < 0 ? -column : column) * 0.85, FLOOR_Y, 3.6 - row * 0.9]
           return (
             <group key={`${letter}-${i}`} scale={0.8} position={position}>
               <Piece letter={letter} position={[0, 0, 0]} materials={materials} />

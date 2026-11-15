@@ -132,9 +132,9 @@ export function SceneLights({ mode }: { mode: SceneMode }) {
 }
 
 /** The white round stage the board stands on. */
-export function Floor({ radius = 14 }: { radius?: number }) {
+export function Floor({ radius = 14, y = -0.26 }: { radius?: number; y?: number }) {
   return (
-    <mesh rotation-x={-Math.PI / 2} position={[0, -0.26, 0]} receiveShadow>
+    <mesh rotation-x={-Math.PI / 2} position={[0, y, 0]} receiveShadow>
       <circleGeometry args={[radius, 72]} />
       <meshStandardMaterial color="#ffffff" roughness={0.9} metalness={0} />
     </mesh>

@@ -41,7 +41,7 @@ export function BackdropPicker() {
   return (
     <div className={styles.picker}>
       <p className={styles.note}>
-        The picture behind every page. With a picture the app always uses its dark colours. It is saved on this device.
+        The picture behind every page. It is saved on this device.
       </p>
       <ul className={styles.options}>
         {options.map((option) => (
@@ -54,6 +54,7 @@ export function BackdropPicker() {
             >
               <span
                 className={styles.thumb}
+                data-aurora={'aurora' in option && option.aurora ? '' : undefined}
                 style={option.src ? { backgroundImage: `url("${option.src}")` } : undefined}
                 aria-hidden="true"
               />

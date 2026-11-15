@@ -58,8 +58,12 @@
   font-size: 14px;
 }
 
-/* Not playable yet: dimmed. */
-.soon svg,
+/* Not playable yet: the picture a little muted, the name dimmed. */
+.soon svg {
+  opacity: 0.8;
+  filter: saturate(0.75);
+}
+
 .soon .name {
   opacity: 0.5;
 }

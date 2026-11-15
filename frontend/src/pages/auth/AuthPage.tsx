@@ -13,9 +13,10 @@ import {
 } from '../../auth/validation'
 import { Button } from '../../components/Button'
 import { TextField } from '../../components/TextField'
-import { Logo } from '../../components/Logo'
+import { Monogram } from '../../components/Monogram'
 import { Wordmark } from '../../components/Wordmark'
 import { authBackend } from '../../lib/auth'
+import { env } from '../../lib/env'
 import { ApiError } from '../../lib/http'
 import styles from './AuthPage.module.css'
 
@@ -67,7 +68,14 @@ export function AuthPage() {
     headingRef.current?.focus()
   }, [mode])
 
+  // Local mode: sign-in also takes a username (e.g. the built-in `admin` account).
+  const loginByName = mode === 'sign-in' && env.authBackend === 'local'
+
   function validate(field: Field, value: string): string | undefined {
+    if (field === 'email' && loginByName) {
+      if (!value.trim()) return 'Enter your email or username.'
+      return value.includes('@') ? validateEmail(value) : undefined
+    }
     if (field === 'email') return validateEmail(value)
     if (field === 'username') return validateUsername(value)
     if (field === 'code') return validateCode(value)
@@ -203,9 +211,9 @@ export function AuthPage() {
     <div className={styles.page}>
       {wide && (
         <aside className={styles.stage} aria-hidden="true">
-          <Logo size={440} className={styles.bigLogo} />
+          <Monogram size={440} className={styles.bigLogo} />
           <p className={styles.stageName}>
-            Board <span className={styles.stageDrop}>Playable</span>
+            <span className={styles.stageBoard}>Board</span> <span className={styles.stageDrop}>Playable</span>
           </p>
         </aside>
       )}
@@ -231,11 +239,11 @@ export function AuthPage() {
             {mode !== 'verify' && (
               <TextField
                 id="auth-email"
-                label="Email"
-                type="email"
+                label={loginByName ? 'Email or username' : 'Email'}
+                type={loginByName ? 'text' : 'email'}
                 name="email"
-                autoComplete="email"
-                inputMode="email"
+                autoComplete={loginByName ? 'username' : 'email'}
+                inputMode={loginByName ? 'text' : 'email'}
                 value={values.email}
                 onChange={(e) => update('email', e.target.value)}
                 onBlur={() => blur('email')}

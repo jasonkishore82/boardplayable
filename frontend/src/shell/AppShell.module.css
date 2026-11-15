@@ -51,6 +51,17 @@
   opacity: 0;
 }
 
+/* Light mode: pale veils instead of dark ones, so dark text reads over the picture. */
+:global([data-theme='light']) .backdrop::before {
+  background: rgb(244 246 251 / 0.8);
+}
+
+:global([data-theme='light']) .backdrop::after {
+  background:
+    linear-gradient(90deg, rgb(244 246 251 / 0.75), transparent 60%),
+    linear-gradient(180deg, rgb(244 246 251 / 0.75) 0%, rgb(244 246 251 / 0.15) 28%, rgb(244 246 251 / 0.4) 55%, rgb(244 246 251 / 0.94) 100%);
+}
+
 .backdrop[data-home]::before {
   opacity: 0;
 }
@@ -256,7 +267,7 @@
 
   .bottomnav .tabs {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr); /* Games, Friends, Profile, Settings */
     height: var(--bottombar-height);
   }
 
@@ -291,5 +302,394 @@
 
   .bottomnav .active {
     color: var(--text);
+  }
+}
+
+/* The theme button, at the right end of the top bar. */
+.topbarEnd {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* "Menu" heading over the links: sidebar only. */
+.navLabel {
+  display: none;
+}
+
+/* ---------- Sidebar (720px and wider) ----------
+   The header becomes a left sidebar in the Playline palette: indigo-navy, the logo at the top, the menu down the
+   side with the current page as a magenta-to-blue pill, and the theme button at the bottom. From 720 to 1099px it is
+   a narrow rail of icons. The pages' --topbar-height becomes 0 because nothing sits above them any more. */
+@media (min-width: 720px) {
+  .shell {
+    --topbar-height: 0px;
+    --sidebar-w: 248px;
+    --side-bg: #101117;
+    --side-line: #1f2029;
+    --side-text: #ffffff;
+    --side-muted: #a1a3b3;
+    --side-chip: rgb(255 255 255 / 0.06);
+    --side-hover: rgb(255 255 255 / 0.05);
+    display: grid;
+    grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
+  }
+
+  :global([data-theme='light']) .shell {
+    --side-bg: #ffffff;
+    --side-line: #e3e5f2;
+    --side-text: #15172e;
+    --side-muted: #5b5f8a;
+    --side-chip: rgb(21 23 46 / 0.05);
+    --side-hover: rgb(21 23 46 / 0.04);
+  }
+
+  .topbar,
+  .topbar[data-clear] {
+    grid-column: 1;
+    grid-row: 1;
+    position: sticky;
+    top: 0;
+    align-self: start;
+    height: 100dvh;
+    background: var(--side-bg);
+    border-bottom: 0;
+    border-right: 1px solid var(--side-line);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  /* Fill the whole space beside the sidebar on every page. (The old centred layout's `margin: 0 auto` made the main
+     area shrink to its content inside the grid, leaving wide empty gutters.) */
+  .main {
+    grid-column: 2;
+    grid-row: 1;
+    min-width: 0;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    /* 12px top and bottom: the Friends chat fills the window height minus exactly this */
+    padding: var(--space-3) var(--space-5);
+  }
+
+  .topbarInner {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-6);
+    height: 100%;
+    padding: var(--space-5) var(--space-4);
+    overflow-y: auto;
+  }
+
+  .topbarInner > :last-child {
+    justify-self: auto;
+    margin-top: auto;
+    justify-content: flex-start;
+  }
+
+  .brand {
+    padding: 0 var(--space-2);
+  }
+
+  .navLabel {
+    display: block;
+    margin: 0 0 var(--space-2);
+    padding: 0 var(--space-3);
+    color: var(--side-muted);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    opacity: 0.7;
+  }
+
+  .topnav .tabs {
+    flex-direction: column;
+    gap: 6px;
+    padding: 0;
+    border: 0;
+    background: none;
+  }
+
+  .pill {
+    display: none;
+  }
+
+  .topnav .tab {
+    gap: 12px;
+    padding: 8px 12px 8px 8px;
+    border-radius: 14px;
+    color: var(--side-muted);
+    font-size: 15px;
+    font-weight: 600;
+    transition: color 200ms var(--glide), background-color 200ms var(--glide);
+  }
+
+  /* each icon sits in its own small rounded square */
+  .topnav .tab svg {
+    box-sizing: content-box;
+    flex: none;
+    padding: 7px;
+    background: var(--side-chip);
+    border-radius: 10px;
+  }
+
+  .topnav .tab:hover {
+    background: var(--side-hover);
+    color: var(--side-text);
+  }
+
+  .topnav .active,
+  .topnav .active:hover {
+    background: linear-gradient(90deg, #d62ee8, #4b5bff);
+    color: #fff;
+    box-shadow: 0 8px 22px rgb(150 60 230 / 0.3);
+  }
+
+  .topnav .active svg {
+    background: rgb(255 255 255 / 0.2);
+  }
+}
+
+/* ---------- Full screen while a game is open (data-game) ---------- */
+.shell[data-game] .topbar,
+.shell[data-game] .bottomnav {
+  display: none;
+}
+
+@media (min-width: 720px) {
+  .shell[data-game] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .shell[data-game] .main {
+    grid-column: 1;
+  }
+}
+
+@media (max-width: 719px) {
+  /* no bottom bar to leave room for */
+  .shell[data-game] .main {
+    padding-bottom: calc(var(--space-5) + env(safe-area-inset-bottom));
+  }
+}
+
+/* Collapse button on the sidebar's right edge (hidden on phones, which use the bottom bar). */
+.collapse {
+  display: none;
+}
+
+@media (min-width: 720px) {
+  .shell {
+    transition: grid-template-columns 280ms var(--glide);
+  }
+
+  .collapse {
+    position: absolute;
+    top: 96px; /* level with the "Menu" label, clear of the logo */
+    right: -14px;
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    background: var(--side-bg);
+    border: 1px solid var(--side-line);
+    border-radius: 50%;
+    color: var(--side-muted);
+    cursor: pointer;
+    transition: color 160ms var(--glide), border-color 160ms var(--glide);
+  }
+
+  .collapse:hover {
+    color: var(--side-text);
+    border-color: var(--side-muted);
+  }
+
+  .collapse svg {
+    transition: rotate 280ms var(--glide);
+  }
+
+  .shell[data-rail] .collapse svg {
+    rotate: 180deg;
+  }
+
+  /* Collapsed: an icon rail. (data-rail is set when the player collapses it, and by default below 1100px wide.) */
+  .shell[data-rail] {
+    --sidebar-w: 84px;
+  }
+
+  .shell[data-rail] .topbarInner {
+    align-items: center;
+    padding: var(--space-5) var(--space-2);
+  }
+
+  .shell[data-rail] .brand {
+    padding: 0;
+  }
+
+  /* the logo without the name */
+  .shell[data-rail] .brand > span > span {
+    display: none;
+  }
+
+  .shell[data-rail] .navLabel {
+    display: none;
+  }
+
+  .shell[data-rail] .topnav .tab {
+    justify-content: center;
+    padding: 8px;
+  }
+
+  .shell[data-rail] .topnav .tab span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .shell[data-rail] .topbarInner > :last-child {
+    justify-content: center;
+  }
+}
+
+/* ---------- Aurora backdrop ---------- */
+
+/* The default backdrop: bands of the logo's red and purple, blurred together over a near-black sky (a pale one in
+   light mode), each drifting on its own slow loop so the colours keep mixing. The veils over it are lighter than
+   over a picture, so the colours stay rich. */
+.backdrop[data-aurora] {
+  background-color: #07050f;
+}
+
+.aurora {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  filter: blur(70px) saturate(1.15);
+}
+
+.aurora span {
+  position: absolute;
+  border-radius: 50%;
+  mix-blend-mode: screen;
+  opacity: 0.75;
+  animation: aurora-a 26s ease-in-out infinite alternate;
+}
+
+.aurora span:nth-child(1) {
+  top: -20%;
+  left: -10%;
+  width: 70%;
+  height: 65%;
+  background: radial-gradient(closest-side, #e3123f, transparent);
+}
+
+.aurora span:nth-child(2) {
+  top: -10%;
+  right: -15%;
+  width: 75%;
+  height: 70%;
+  background: radial-gradient(closest-side, #7433d6, transparent);
+  animation-name: aurora-b;
+  animation-duration: 32s;
+}
+
+.aurora span:nth-child(3) {
+  bottom: -25%;
+  left: 15%;
+  width: 70%;
+  height: 60%;
+  background: radial-gradient(closest-side, #8a4dff, transparent);
+  animation-name: aurora-c;
+  animation-duration: 38s;
+}
+
+.aurora span:nth-child(4) {
+  top: 25%;
+  left: 30%;
+  width: 45%;
+  height: 40%;
+  background: radial-gradient(closest-side, #ff5a6e, transparent);
+  opacity: 0.45;
+  animation-duration: 22s;
+  animation-direction: alternate-reverse;
+}
+
+@keyframes aurora-a {
+  0% {
+    transform: translate(0, 0) rotate(0deg) scale(1);
+  }
+  50% {
+    transform: translate(18%, 12%) rotate(25deg) scale(1.15);
+  }
+  100% {
+    transform: translate(-6%, 22%) rotate(-10deg) scale(0.95);
+  }
+}
+
+@keyframes aurora-b {
+  0% {
+    transform: translate(0, 0) rotate(0deg) scale(1.05);
+  }
+  50% {
+    transform: translate(-20%, 18%) rotate(-30deg) scale(0.9);
+  }
+  100% {
+    transform: translate(-8%, -6%) rotate(15deg) scale(1.15);
+  }
+}
+
+@keyframes aurora-c {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(-15%, -22%) scale(1.2);
+  }
+  100% {
+    transform: translate(20%, -8%) scale(0.95);
+  }
+}
+
+/* The veils sit over the aurora's bands, and are lighter than over a picture. */
+.backdrop[data-aurora]::before,
+.backdrop[data-aurora]::after {
+  z-index: 1;
+}
+
+.backdrop[data-aurora]::before {
+  background: rgb(5 7 14 / 0.4);
+}
+
+.backdrop[data-aurora]::after {
+  background: linear-gradient(180deg, rgb(5 7 14 / 0.35) 0%, transparent 30%, transparent 60%, rgb(5 7 14 / 0.7) 100%);
+}
+
+/* Light mode: a pale sky, the same colours a little softer, and pale veils. */
+:global([data-theme='light']) .backdrop[data-aurora] {
+  background-color: #f7f3fc;
+}
+
+:global([data-theme='light']) .aurora span {
+  mix-blend-mode: multiply;
+  opacity: 0.4;
+}
+
+:global([data-theme='light']) .backdrop[data-aurora]::before {
+  background: rgb(247 243 252 / 0.45);
+}
+
+:global([data-theme='light']) .backdrop[data-aurora]::after {
+  background: linear-gradient(180deg, rgb(247 243 252 / 0.4) 0%, transparent 30%, transparent 60%, rgb(247 243 252 / 0.8) 100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora span {
+    animation: none;
   }
 }

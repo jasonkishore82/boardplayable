@@ -145,11 +145,20 @@ def complete_signup(
 
 @router.post("/signin")
 def sign_in(body: SignInBody, settings: Settings = Depends(get_settings)) -> dict[str, Any]:
-    email = clean_email(body.email)
+    login = body.email.strip().lower()
     with session(settings.local_db_path) as conn:
-        row = conn.execute("select id, password_hash from users where email = ?", (email,)).fetchone()
+        if "@" in login:
+            row = conn.execute(
+                "select id, password_hash from users where email = ?", (clean_email(login),)
+            ).fetchone()
+        else:
+            # Local mode also accepts a username here (e.g. the built-in `admin` account).
+            row = conn.execute(
+                "select u.id, u.password_hash from users u join profiles p on p.id = u.id where p.username = ?",
+                (login,),
+            ).fetchone()
         if row is None or not verify_password(body.password, row["password_hash"]):
-            raise HTTPException(401, "That email and password don't match.")
+            raise HTTPException(401, "That email or username and password don't match.")
         return session_payload(settings, conn, row["id"])
 
 

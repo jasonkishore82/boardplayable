@@ -57,8 +57,24 @@
 /* Chess uses the whole window width, not the page's 1120px column: the board is limited by the room beside it. The
    margin keeps the wider table centred on the window. */
 .table[data-wide] {
-  width: min(calc(100vw - 48px), 1760px);
-  margin-left: calc((100% - min(calc(100vw - 48px), 1760px)) / 2);
+  --gutter: 48px;
+  width: min(calc(100vw - var(--gutter)), 1760px);
+  margin-left: calc((100% - min(calc(100vw - var(--gutter)), 1760px)) / 2);
+}
+
+@media (max-width: 719px) {
+  .table[data-wide] {
+    --gutter: 24px;
+  }
+}
+
+/* Beside the sidebar the page area already spans the window, so the wide table simply fills it (sizing from the full
+   window width would slide it under the sidebar). */
+@media (min-width: 720px) {
+  .table[data-wide] {
+    width: 100%;
+    margin-left: 0;
+  }
 }
 
 .top {
@@ -119,6 +135,8 @@
   /* The moves card and the chat card share one width and one height. */
   --panel-w: 330px;
   --panel-height: 420px;
+  /* The chess moves card. Stacked under the board on a narrow window it only needs to show a few lines. */
+  --moves-height: 240px;
 }
 
 /* Chess (data-side="right") puts the side panel with the moves right of the board: board, side panel, chat. */
@@ -158,7 +176,8 @@
      and an 8px gap, see .avatar and .area in Chess.module.css). */
   .cols[data-side='right'] {
     grid-template-columns: minmax(0, 1fr) var(--panel-w) var(--panel-w);
-    --panel-height: clamp(480px, calc(100dvh - 268px), 1000px);
+    --panel-height: var(--chess-board, clamp(480px, calc(100dvh - 268px), 1000px));
+    --moves-height: var(--panel-height);
   }
 
   .cols[data-side='right'] .side,
@@ -201,14 +220,14 @@
    the toolbar row, the two name strips and the gaps between them: measured at about 260px in a real browser, plus a
    little air. (The page's own padding above and below is trimmed for this table in AppShell.module.css.) */
 .play[data-wide] {
-  max-width: clamp(480px, calc(100dvh - 268px), 1000px);
+  max-width: var(--chess-board, clamp(480px, calc(100dvh - 268px), 1000px));
 }
 
 /* On a wide window the chess dock stands beside the board, so the column makes room for it. */
 @media (min-width: 1100px) {
   .play[data-wide] {
     padding-right: 108px;
-    max-width: calc(clamp(480px, calc(100dvh - 268px), 1000px) + 108px);
+    max-width: calc(var(--chess-board, clamp(480px, calc(100dvh - 268px), 1000px)) + 108px);
   }
 }
 
@@ -220,6 +239,35 @@
 /* Nothing is reserved under the board for notices: they take room only when there is one to show. */
 .play[data-wide] .under {
   min-height: 0;
+}
+
+/* Chess on a medium window: two 330px panels beside the board would squeeze it, so the moves and the chat share one
+   column. The moves card is short on top; the chat fills the rest of the board's height under it. */
+@media (min-width: 1100px) and (max-width: 1499px) {
+  .cols[data-side='right'] {
+    grid-template-columns: minmax(0, 1fr) var(--panel-w);
+    grid-template-rows: auto 1fr;
+    --panel-w: 300px;
+    --moves-height: 220px;
+  }
+
+  .cols[data-side='right'] .play {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+  }
+
+  .cols[data-side='right'] .side {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .cols[data-side='right'] .chatBox {
+    grid-column: 2;
+    grid-row: 2;
+    margin-top: 0;
+    height: calc(var(--panel-height) - var(--moves-height) - var(--space-6));
+    min-height: 300px;
+  }
 }
 
 /* ---------- Scores ---------- */
@@ -420,26 +468,11 @@
   }
 }
 
-/* On a wide window the chat is pinned to the right edge of the screen instead of the page's centred column.
-   The board keeps the middle. Narrower windows keep the chat beside the board. */
+/* Wide windows keep the same three aligned columns (scores, board, chat) as medium ones: the chat used to be pinned to
+   the screen's edge here, which left it floating away from the table. The board column just gets more room. */
 @media (min-width: 1700px) {
-  .cols,
-  .cols[data-chat='open'] {
-    grid-template-columns: 280px minmax(0, 1fr);
-  }
-
-  .cols[data-side='right'] {
-    grid-template-columns: minmax(0, 1fr) var(--panel-w);
-  }
-
-  .chatBox {
-    position: fixed;
-    top: 230px;
-    right: var(--space-5);
-    z-index: 15;
-    width: var(--panel-w);
-    height: var(--panel-height);
-    min-height: 360px;
+  .cols:not([data-side='right']) {
+    grid-template-columns: 300px minmax(0, 1fr) 360px;
   }
 }
 
@@ -625,12 +658,23 @@
   max-width: 780px;
 }
 
+/* The 3D chess stage (4:3) is as tall as the flat board would be, plus the dock's column on a wide window. */
+.play[data-wide][data-view='3d'] {
+  max-width: calc(var(--chess-board, clamp(480px, calc(100dvh - 268px), 1000px)) * 4 / 3);
+}
+
+@media (min-width: 1100px) {
+  .play[data-wide][data-view='3d'] {
+    max-width: calc(var(--chess-board, clamp(480px, calc(100dvh - 268px), 1000px)) * 4 / 3 + 108px);
+  }
+}
+
 .stage {
   position: relative;
   width: 100%;
   aspect-ratio: 4 / 3;
   overflow: hidden;
-  background: radial-gradient(70% 60% at 50% 30%, rgb(0 112 209 / 0.18), transparent 70%), #070a12;
+  background: radial-gradient(70% 60% at 50% 30%, rgb(116 51 214 / 0.2), transparent 70%), #070a12;
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   touch-action: none;
@@ -764,9 +808,9 @@
   --border: #2d3652;
   --border-strong: #3d4768;
   --surface-sunken: #0d1220;
-  --accent: #0070d1;
-  --accent-bright: #5aaaff;
-  --accent-soft: rgb(90 170 255 / 0.18);
+  --accent: #7433d6;
+  --accent-bright: #b57cff;
+  --accent-soft: rgb(138 77 255 / 0.22);
   --accent-text: #fff;
   --focus: #fff;
 }
