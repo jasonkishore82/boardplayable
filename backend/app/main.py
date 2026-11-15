@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .config import get_settings
 from .local.db import migrate
-from .routes import health, local, me, otp, rooms, social_local
+from .routes import bots, health, local, me, otp, rooms, social_local
 
 
 LAN_ORIGINS = (
@@ -37,6 +37,7 @@ def create_app() -> FastAPI:
     app.include_router(health.router)
     app.include_router(me.router)
     app.include_router(otp.router)
+    app.include_router(bots.router)
     if settings.local_mode:
         app.include_router(local.router)
         app.include_router(social_local.router)

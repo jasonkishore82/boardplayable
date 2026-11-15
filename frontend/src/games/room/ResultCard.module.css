@@ -1,0 +1,99 @@
+/* The end-of-game card: dims what is behind it and puts one plain card in the middle. */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+  background: rgb(3 6 12 / 0.62);
+  backdrop-filter: blur(4px);
+  animation: fade 180ms var(--ease);
+}
+
+/* Inside the full-screen board: it covers the board, not the page. */
+.contained {
+  position: absolute;
+  z-index: 8;
+}
+
+.card {
+  --tone: var(--accent-bright);
+  width: min(400px, 100%);
+  padding: var(--space-6) var(--space-5) var(--space-5);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 24px 60px rgb(0 0 0 / 0.5);
+  color: var(--text);
+  text-align: center;
+  animation: rise 220ms var(--ease);
+}
+
+.card[data-tone='win'] {
+  --tone: var(--gold);
+}
+.card[data-tone='loss'] {
+  --tone: var(--danger);
+}
+.card[data-tone='draw'] {
+  --tone: var(--text-muted);
+}
+
+.icon {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  margin: 0 auto var(--space-4);
+  background: color-mix(in srgb, var(--tone) 16%, transparent);
+  border-radius: 20px;
+  color: var(--tone);
+}
+
+.title {
+  margin: 0;
+  color: var(--text);
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  line-height: 1.15;
+}
+
+.detail {
+  margin-top: var(--space-2);
+  color: var(--text);
+  font-size: 17px;
+}
+
+.meta {
+  margin-top: var(--space-1);
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.actions {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: var(--space-5);
+}
+
+.row {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: var(--space-2);
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+}

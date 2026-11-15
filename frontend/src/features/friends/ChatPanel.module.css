@@ -1,12 +1,9 @@
+/* The open conversation fills the right side of the chats card. */
 .panel {
   display: flex;
   flex-direction: column;
-  height: clamp(440px, calc(100dvh - 240px), 720px);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-card);
-  overflow: hidden;
+  flex: 1;
+  min-height: 0;
 }
 
 .head {
@@ -14,36 +11,25 @@
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-3) var(--space-4);
+  background: var(--surface);
   border-bottom: 1px solid var(--border);
 }
 
 .back {
   display: none;
+  place-items: center;
   width: 36px;
   height: 36px;
-  place-items: center;
+  margin-left: -6px;
   background: none;
   border: 0;
   border-radius: 50%;
   color: var(--text);
-  font-size: 18px;
   cursor: pointer;
 }
 
 .back:hover {
   background: var(--surface-sunken);
-}
-
-.avatar {
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: var(--accent-soft);
-  color: var(--accent);
-  font-weight: 600;
 }
 
 .name {
@@ -52,10 +38,14 @@
   font-weight: 600;
 }
 
+/* The messages sit on a soft tint, as white cards with a light shadow; your own are tinted. */
 .body {
+  --chat-bubble: var(--surface);
+  --chat-shadow: 0 1px 4px rgb(20 30 60 / 0.14);
   flex: 1;
   min-height: 0;
   padding: var(--space-4);
+  background: color-mix(in srgb, var(--surface-sunken) 60%, var(--surface));
 }
 
 @media (max-width: 879px) {

@@ -1,28 +1,41 @@
-/* Design tokens. One neutral scale, one accent (table-felt green). */
-:root {
+/* Design tokens. Calm and flat, in the spirit of the PlayStation 5 interface: a near-black blue background,
+   quiet translucent surfaces, small corner radii, one blue accent, and a white focus outline.
+   Other files (including the game boards) use these names, so keep them. */
+:root,
+[data-theme='dark'] {
   --font-sans: 'Inter Variable', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-display: var(--font-sans);
 
-  --bg: #fafaf9;
-  --surface: #ffffff;
-  --surface-sunken: #f2f2f0;
-  --border: #e6e6e3;
-  --border-strong: #d4d4d0;
-  --text: #171716;
-  --text-muted: #62625e;
-  --text-faint: #8a8a85;
+  --bg: #0a0e1a;
+  --surface: #151b2b;
+  --surface-raised: #1c2336;
+  --surface-sunken: #0d1220;
+  --border: #252d44;
+  --border-strong: #38425f;
+  --text: #ffffff;
+  --text-muted: #aab3ca;
+  --text-faint: #7b86a3;
 
-  --accent: #1f5c45;
-  --accent-hover: #194d3a;
-  --accent-text: #ffffff;
-  --accent-soft: #e8f0ec;
+  /* The accent stays a plain colour so it can be mixed (color-mix) with surfaces. */
+  --accent: #0070d1;
+  --accent-hover: #1a85e6;
+  --accent-bright: #5aaaff; /* for text and thin lines on dark backgrounds */
+  --accent-text: #ffffff; /* text on a filled accent */
+  --accent-soft: rgb(0 112 209 / 0.2);
 
-  --danger: #b42318;
-  --danger-soft: #fdf0ee;
-  --focus: #2f7a5c;
+  /* Supporting colours for marks, highlights and scores. */
+  --violet: #8b7cf6;
+  --pink: #e8ecf5;
+  --cyan: #5aaaff;
+  --gold: #f5c542;
 
-  --radius-sm: 8px;
-  --radius: 12px;
-  --radius-lg: 18px;
+  --danger: #ff5c6c;
+  --danger-soft: rgb(255 92 108 / 0.14);
+  --focus: #ffffff;
+
+  --radius-sm: 6px;
+  --radius: 8px;
+  --radius-lg: 12px;
 
   --space-1: 4px;
   --space-2: 8px;
@@ -34,36 +47,82 @@
   --space-8: 72px;
 
   --ease: cubic-bezier(0.2, 0, 0, 1);
-  --duration: 180ms;
+  --duration: 150ms;
 
-  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.04);
-  --topbar-height: 56px;
+  --shadow-card: 0 2px 14px rgb(0 0 0 / 0.28);
+  --glow-accent: 0 0 0 2px #ffffff;
+  --glow-violet: none;
+  --topbar-height: 60px;
   --bottombar-height: 64px;
 
-  color-scheme: light;
+  /* Page, overlay and depth colours, all in one place so the light theme can swap them. */
+  --glow-a: rgb(0 112 209 / 0.2);
+  --glow-b: rgb(0 112 209 / 0.07);
+  --glow-c: transparent;
+  --page-top: #0d1527;
+  --page-bottom: #05070e;
+  --grid-line: transparent;
+  --heading-from: #ffffff;
+  --heading-to: #ffffff;
+  --edge: rgb(0 0 0 / 0.5);
+  --overlay: rgb(255 255 255 / 0.07);
+  --overlay-strong: rgb(255 255 255 / 0.13);
+  --inset: rgb(0 0 0 / 0.3);
+  --nav-bg: rgb(10 14 26 / 0.78);
+  --nav-bg-strong: rgb(10 14 26 / 0.9);
+  --btn2-from: rgb(255 255 255 / 0.12);
+  --btn2-to: rgb(255 255 255 / 0.12);
+
+  color-scheme: dark;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #111110;
-    --surface: #191918;
-    --surface-sunken: #1f1f1e;
-    --border: #2a2a28;
-    --border-strong: #3a3a37;
-    --text: #ededeb;
-    --text-muted: #a3a39e;
-    --text-faint: #7c7c77;
+/* Light theme. Switched with data-theme="light" on <html> (see lib/theme.ts). It can also be set on a part of the
+   page, as the profile's white sheet does. */
+[data-theme='light'] {
+  --bg: #eef1f6;
+  --surface: #ffffff;
+  --surface-raised: #f6f8fb;
+  --surface-sunken: #e4e9f1;
+  --border: #d6dce8;
+  --border-strong: #b7c0d2;
+  --text: #0b1020;
+  --text-muted: #4a5470;
+  --text-faint: #7380a0;
 
-    --accent: #4fae86;
-    --accent-hover: #63bd97;
-    --accent-text: #0c1f17;
-    --accent-soft: #17291f;
+  --accent: #0070d1;
+  --accent-hover: #005fb3;
+  --accent-bright: #0070d1;
+  --accent-text: #ffffff;
+  --accent-soft: rgb(0 112 209 / 0.12);
 
-    --danger: #f97066;
-    --danger-soft: #2a1513;
-    --focus: #6cc39d;
+  --violet: #6d5ce0;
+  --pink: #3a4663;
+  --cyan: #0070d1;
+  --gold: #b87d00;
 
-    --shadow-card: none;
-    color-scheme: dark;
-  }
+  --danger: #d3283e;
+  --danger-soft: rgb(211 40 62 / 0.1);
+  --focus: #0b1020;
+
+  --shadow-card: 0 2px 12px rgb(30 40 90 / 0.1);
+  --glow-accent: 0 0 0 2px #0b1020;
+
+  --glow-a: rgb(0 112 209 / 0.1);
+  --glow-b: transparent;
+  --glow-c: transparent;
+  --page-top: #f5f7fb;
+  --page-bottom: #e7ebf3;
+  --grid-line: transparent;
+  --heading-from: #0b1020;
+  --heading-to: #0b1020;
+  --edge: rgb(30 40 90 / 0.18);
+  --overlay: rgb(11 16 32 / 0.05);
+  --overlay-strong: rgb(11 16 32 / 0.1);
+  --inset: rgb(30 40 90 / 0.1);
+  --nav-bg: rgb(244 246 251 / 0.82);
+  --nav-bg-strong: rgb(244 246 251 / 0.92);
+  --btn2-from: rgb(11 16 32 / 0.07);
+  --btn2-to: rgb(11 16 32 / 0.07);
+
+  color-scheme: light;
 }

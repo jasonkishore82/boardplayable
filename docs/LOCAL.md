@@ -42,13 +42,13 @@ Friends on the same Wi-Fi can open your copy of the app, make accounts, chat, an
 2. Start both servers listening on the network, not just this computer:
    ```
    cd backend  && .venv\Scripts\python -m uvicorn app.main:app --host 0.0.0.0 --port 8001
-   cd frontend && npm run dev:lan -- --port 5175 --strictPort
+   cd frontend && npm run dev:lan -- --port 5184 --strictPort
    ```
 3. Find your address with `ipconfig` (the Wi-Fi "IPv4 Address", for example `192.168.2.111`) and send your friend
-   `http://192.168.2.111:5175`.
+   `http://192.168.2.111:5184`.
 4. Windows blocks incoming connections by default. Once, in a PowerShell opened **as administrator**:
    ```
-   New-NetFirewallRule -DisplayName "Board Playable dev" -Direction Inbound -Protocol TCP -LocalPort 5175,8001 -Action Allow -Profile Domain,Private
+   New-NetFirewallRule -DisplayName "Board Playable dev" -Direction Inbound -Protocol TCP -LocalPort 5184,8001 -Action Allow -Profile Domain,Private
    ```
    To undo it later: `Remove-NetFirewallRule -DisplayName "Board Playable dev"`.
 

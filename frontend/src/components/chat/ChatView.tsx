@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react'
-import { Button } from '../Button'
+import { useEffect, useId, useRef, useState, type FormEvent, type KeyboardEvent } from 'react'
+import { initials } from '../../lib/initials'
+import { Avatar } from '../Avatar'
 import styles from './ChatView.module.css'
 
 export type ChatLine = {
@@ -9,6 +10,10 @@ export type ChatLine = {
   author?: string | null
   body: string
   at: string
+  /** Pictures to try for the author, e.g. a computer opponent's portrait. Initials are shown without one. */
+  avatar?: string[]
+  /** A note from the room rather than a person, shown centred with its time, e.g. "Game 2 started · 20:41". */
+  system?: boolean
 }
 
 type Props = {
@@ -30,7 +35,17 @@ function time(at: string): string {
 }
 
 // A conversation: scrolling messages and a box to write in. Used for friend chat and in-game chat.
-export function ChatView({ label, lines, onSend, maxLength = 1000, placeholder = 'Write a message', emptyText, disabled, note }: Props) {
+export function ChatView({
+  label,
+  lines,
+  onSend,
+  maxLength = 1000,
+  placeholder = 'Write a message',
+  emptyText,
+  disabled,
+  note,
+}: Props) {
+  const inputId = useId()
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
@@ -85,24 +100,42 @@ export function ChatView({ label, lines, onSend, maxLength = 1000, placeholder =
         onScroll={onScroll}
       >
         {lines.length === 0 && emptyText && <p className={styles.empty}>{emptyText}</p>}
-        {lines.map((line, i) => {
-          const sameAuthor = i > 0 && lines[i - 1].mine === line.mine && lines[i - 1].author === line.author
+        {lines.map((line) => {
+          if (line.system) {
+            return (
+              <p key={line.id} className={styles.system}>
+                <span>{line.body}</span>
+                <span className={styles.systemTime}>{time(line.at)}</span>
+              </p>
+            )
+          }
+          const name = line.mine ? 'You' : (line.author ?? 'Player')
           return (
             <div key={line.id} className={[styles.row, line.mine && styles.mine].filter(Boolean).join(' ')}>
-              {!line.mine && line.author && !sameAuthor && <span className={styles.author}>{line.author}</span>}
-              <p className={styles.bubble}>{line.body}</p>
-              <span className={styles.time}>{time(line.at)}</span>
+              {!line.mine &&
+                (line.avatar ? (
+                  <Avatar name={name} src={line.avatar} size={32} />
+                ) : (
+                  <span className={styles.avatar} aria-hidden="true">
+                    {initials(name)}
+                  </span>
+                ))}
+              <div className={styles.card}>
+                {!line.mine && <span className={styles.author}>{name}</span>}
+                <p className={styles.body}>{line.body}</p>
+                <span className={styles.time}>{time(line.at)}</span>
+              </div>
             </div>
           )
         })}
       </div>
 
       <form className={styles.composer} onSubmit={submit}>
-        <label htmlFor="chat-input" className={styles.visuallyHidden}>
+        <label htmlFor={inputId} className={styles.visuallyHidden}>
           {placeholder}
         </label>
         <textarea
-          id="chat-input"
+          id={inputId}
           className={styles.input}
           rows={1}
           value={text}
@@ -113,9 +146,22 @@ export function ChatView({ label, lines, onSend, maxLength = 1000, placeholder =
           onKeyDown={onKeyDown}
           autoComplete="off"
         />
-        <Button type="submit" loading={sending} disabled={disabled || !text.trim()}>
-          Send
-        </Button>
+        <button type="submit" className={styles.send} disabled={sending || disabled || !text.trim()} aria-label="Send">
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <path d="M21 3L10 14M21 3l-7 18-4-7-7-4 18-7z" />
+          </svg>
+        </button>
       </form>
       <div aria-live="polite" className={styles.below}>
         {error ? <p className={styles.error}>{error}</p> : note ? <p className={styles.note}>{note}</p> : null}

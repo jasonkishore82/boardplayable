@@ -1,0 +1,533 @@
+/* The chess pages' backdrop: a dusk city picture (public/backgrounds/chess-dusk.webp) under a dark veil that keeps the
+   text readable. It covers the window and stays put while the page scrolls. */
+.stage {
+  /* Its own stacking layer, so the backdrop sits above the page's background but under the content. */
+  position: relative;
+  z-index: 0;
+  color: var(--text);
+}
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    linear-gradient(rgb(8 8 24 / 0.2), rgb(8 8 24 / 0.5)),
+    url('/backgrounds/chess-dusk.webp') 30% 50% / cover no-repeat,
+    #1b1840;
+}
+
+/* When the player has chosen a backdrop in Profile, the app shell already shows it behind every page, so this
+   page's own picture is not drawn on top of it. */
+:global([data-app-backdrop]) .backdrop {
+  display: none;
+}
+
+.board {
+  container-type: inline-size;
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  width: 100%;
+  position: relative;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: 0 8px 24px -10px rgb(0 0 0 / 0.35);
+}
+
+.square {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  font-size: clamp(22px, 8.4cqw, 76px); /* pieces grow with the board */
+  line-height: 1;
+  cursor: default;
+}
+
+/* White and black squares, the same in light and dark mode. --sq is the square's own colour, so the highlights below
+   can be mixed with it. */
+.light {
+  --sq: #f1f1f1;
+  background-color: var(--sq);
+}
+
+.dark {
+  --sq: #2a2a2a;
+  background-color: var(--sq);
+}
+
+.square.open {
+  cursor: pointer;
+  touch-action: none; /* so dragging a piece with a finger does not scroll the page */
+  user-select: none;
+}
+
+/* The piece being dragged leaves its square faint, and a copy follows the pointer. */
+.dragging > span:not(.coord) {
+  opacity: 0.3;
+}
+
+.ghost {
+  position: fixed;
+  z-index: 50;
+  transform: translate(-50%, -50%);
+  line-height: 1;
+  pointer-events: none;
+  cursor: grabbing;
+}
+
+.square.open:hover {
+  box-shadow: inset 0 0 0 3px var(--accent);
+}
+
+.square:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+  z-index: 1;
+}
+
+.last {
+  background-color: color-mix(in srgb, var(--accent) 55%, var(--sq));
+}
+
+.selected {
+  box-shadow: inset 0 0 0 3px var(--accent);
+}
+
+.check {
+  background-color: color-mix(in srgb, var(--danger) 60%, var(--sq));
+}
+
+/* A dot on empty squares you can move to, a ring on ones you can capture. */
+.target::after {
+  content: '';
+  position: absolute;
+  width: 28%;
+  height: 28%;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0.55;
+}
+
+.capture::after {
+  width: 86%;
+  height: 86%;
+  background: none;
+  border: 3px solid var(--accent);
+  opacity: 0.7;
+}
+
+.white {
+  color: #fdfbf6;
+  text-shadow: 0 0 1px #000, 0 0 2px #000, 0 1px 1px rgb(0 0 0 / 0.6);
+}
+
+.black {
+  color: #1d1b19;
+  /* A light edge, so black pieces stay visible on the dark squares. */
+  text-shadow: 0 0 1px #fff, 0 0 2px rgb(255 255 255 / 0.85), 0 0 4px rgb(255 255 255 / 0.4);
+}
+
+/* The dock. On a narrow window it sits under the board. On a wide one it is a column beside the board's right edge:
+   the table leaves room for it (see .play[data-wide] in Room.module.css). Its icons grow toward the pointer. */
+.dockSide {
+  position: relative;
+  width: 100%;
+  height: 124px;
+}
+
+@media (min-width: 1100px) {
+  .dockSide {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc(100% + 12px);
+    width: 96px;
+    height: auto;
+  }
+}
+
+/* Rank numbers down the left edge, file letters along the bottom. */
+.coord {
+  position: absolute;
+  color: #6b6b6b;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.dark .coord {
+  color: #b5b5b5;
+}
+
+.rank {
+  top: 4px;
+  left: 5px;
+}
+
+.file {
+  right: 5px;
+  bottom: 4px;
+}
+
+/* Who is playing, above and below the board. */
+.area {
+  position: relative;
+  display: grid;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+.player {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.player.turn {
+  color: var(--text);
+}
+
+.name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* A rounded-square profile picture: the player's initials on their side's colour. */
+.avatar {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.avatarWhite {
+  background: #fdfbf6;
+  color: #1d1b19;
+}
+
+.avatarBlack {
+  background: #1d1b19;
+  color: #fdfbf6;
+}
+
+/* The moves so far, in the side panel. */
+/* The move list is a card like the chat, with the same width and height (--panel-height comes from the table). */
+.movesCard {
+  display: flex;
+  flex-direction: column;
+  height: var(--panel-height);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+.movesHead {
+  display: flex;
+  align-items: center;
+  min-height: 64px;
+  margin: 0;
+  padding: 0 var(--space-4);
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  font-size: 15px;
+}
+
+.moves {
+  display: grid;
+  flex: 1;
+  align-content: start;
+  gap: 2px;
+  min-height: 0;
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  overflow-y: auto;
+  list-style: none;
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+.moves li {
+  display: grid;
+  grid-template-columns: 2.4em 1fr 1fr;
+  gap: var(--space-2);
+  padding: 4px var(--space-2);
+}
+
+.moveNumber {
+  color: var(--text-faint);
+}
+
+.lastMove {
+  background: var(--accent-soft);
+  border-radius: 4px;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.noMoves {
+  display: block !important;
+  color: var(--text-muted);
+}
+
+/* The pieces a player has taken, in a row after their name: strongest first, and pieces of the same kind tucked
+   close together. The row is cut off rather than wrapped, so the strip never grows taller. */
+.taken {
+  display: flex;
+  flex: 0 1 auto;
+  align-items: center;
+  min-width: 0;
+  height: 36px;
+  overflow: hidden;
+  font-size: 22px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.taken > span {
+  flex: none;
+  margin-left: 3px;
+}
+
+.taken > .takenSame {
+  margin-left: -7px;
+}
+
+/* White or Black, at the right end of your own name strip: a small two-part switch. Once a move has been played it
+   stays on show, dimmed, with a padlock, and can't be pressed. */
+.sides {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+  margin-left: auto;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text) 5%, transparent);
+  color: var(--text-faint);
+}
+
+.sides svg {
+  margin: 0 2px 0 6px;
+}
+
+.side {
+  padding: 4px 12px;
+  background: none;
+  border: 0;
+  border-radius: 999px;
+  color: var(--text-faint);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 240ms var(--ease), background-color 240ms var(--ease);
+}
+
+.side:hover:not(:disabled) {
+  color: var(--text);
+}
+
+.side[aria-pressed='true'] {
+  background: var(--text);
+  color: var(--bg);
+  font-weight: 600;
+}
+
+.side:disabled {
+  cursor: not-allowed;
+}
+
+.sides[data-locked] {
+  opacity: 0.55;
+}
+
+/* On a narrow screen the strip may wrap, so the name, the taken pieces and the switch all stay readable. */
+@media (max-width: 719px) {
+  .player {
+    flex-wrap: wrap;
+  }
+}
+
+/* ---------- Promotion pop-up: choose what a pawn becomes at the far end ---------- */
+
+/* Covers the board it belongs to (the flat board's area, or the 3D stage) and dims it. */
+.promoBackdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 9;
+  display: grid;
+  place-items: center;
+  padding: var(--space-3);
+  background: rgb(3 6 12 / 0.6);
+  border-radius: var(--radius);
+  animation: promo-fade 180ms var(--ease);
+}
+
+.promo {
+  display: grid;
+  gap: var(--space-4);
+  justify-items: center;
+  width: min(420px, 100%);
+  padding: var(--space-5);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: 20px;
+  box-shadow: 0 24px 60px rgb(0 0 0 / 0.5);
+  color: var(--text);
+  animation: promo-rise 240ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.promoTitle {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.promoChoices {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-2);
+  width: 100%;
+}
+
+.promoChoice {
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+  padding: var(--space-3) var(--space-1) var(--space-2);
+  background: var(--overlay);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    scale 240ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color var(--duration) var(--ease),
+    color var(--duration) var(--ease);
+}
+
+.promoChoice:hover,
+.promoChoice:focus-visible {
+  background: var(--overlay-strong);
+  color: var(--text);
+  scale: 1.05;
+}
+
+/* The piece sits on a mid-grey tile, so both white and black pieces stand out on it. */
+.promoPiece {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 1;
+  background: #8a92a6;
+  border-radius: 10px;
+  font-size: clamp(30px, 9vw, 46px);
+  line-height: 1;
+}
+
+.promoCancel {
+  padding: 4px 10px;
+  background: none;
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.promoCancel:hover {
+  color: var(--text);
+}
+
+@keyframes promo-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes promo-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+}
+
+/* A bot's portrait in the name strip: the same size and corners as the initials square. */
+.portrait {
+  border-radius: 10px !important;
+}
+
+/* ---------- Before the game: the board blurred under a "Start game" card ---------- */
+
+.boardWrap {
+  position: relative;
+  width: 100%;
+}
+
+.boardWrap > :first-child {
+  transition: filter 500ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.boardWrap[data-waiting] > :first-child {
+  filter: blur(6px) brightness(0.7);
+  pointer-events: none;
+}
+
+.startOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+  animation: promo-fade 240ms var(--ease);
+}
+
+.startCard {
+  display: grid;
+  gap: var(--space-4);
+  justify-items: center;
+  max-width: 320px;
+  padding: var(--space-5) var(--space-6);
+  background: rgb(10 14 26 / 0.72);
+  border: 1px solid rgb(255 255 255 / 0.12);
+  border-radius: 20px;
+  box-shadow: 0 24px 60px rgb(0 0 0 / 0.45);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  text-align: center;
+  animation: promo-rise 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.startCard .sides {
+  margin-left: 0;
+}
+
+.startNote {
+  color: #d5dbe8;
+  font-size: 15px;
+}
+
+.startCard > button {
+  min-width: 180px;
+}

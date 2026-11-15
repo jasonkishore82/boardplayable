@@ -1,0 +1,46 @@
+/* The ringed counter rolls down the curved slope on hover. The translations follow the slope's surface, from the
+   ring's resting place at the top of the "L" to the foot of the curve; the ring makes one full turn on the way down, so its
+   light reflection comes back to where it started and the ring turns like a wheel instead of sliding. Units are the logo's own drawing units. */
+.ring {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.down {
+  animation: roll-down 1.1s cubic-bezier(0.5, 0, 0.75, 0.9) forwards;
+}
+
+.up {
+  animation: roll-up 0.7s cubic-bezier(0.3, 0.1, 0.4, 1) forwards;
+}
+
+@keyframes roll-down {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  35% {
+    transform: translate(17px, 85px) rotate(130deg);
+  }
+  70% {
+    transform: translate(38px, 166px) rotate(260deg);
+  }
+  100% {
+    transform: translate(55px, 201px) rotate(360deg);
+  }
+}
+
+@keyframes roll-up {
+  0% {
+    transform: translate(55px, 201px) rotate(360deg);
+  }
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .down,
+  .up {
+    animation: none;
+  }
+}

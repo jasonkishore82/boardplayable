@@ -1,6 +1,6 @@
 # Board Playable
 
-Classic board and card games in 3D, played with friends. Live at boardplayable.site.
+Play chess and tic-tac-toe online with friends. Live at boardplayable.site.
 
 This round ships the sign-in flow and the app shell (Games, Friends, Profile). Game engines and live rooms plug in later.
 

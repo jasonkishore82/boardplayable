@@ -18,6 +18,8 @@ function toSession(session: Session | null): AppSession | null {
       email: user.email ?? '',
       username: (user.user_metadata?.username as string | undefined) ?? null,
       createdAt: user.created_at,
+      isGuest: user.is_anonymous === true,
+      avatarUrl: (user.user_metadata?.avatar_url as string | undefined) ?? null,
     },
   }
 }
@@ -41,6 +43,26 @@ export const supabaseAuth: AuthBackend = {
   async signInWithPassword(email, password) {
     const { error } = await client().auth.signInWithPassword({ email, password })
     if (error) throw error
+  },
+
+  // Supabase anonymous sign-in (turn it on under Authentication > Sign In / Providers > Anonymous Sign-Ins).
+  // The guest then claims a random username, like any new player.
+  async signInAsGuest() {
+    const { error } = await client().auth.signInAnonymously()
+    if (error) throw error
+    for (let attempt = 0; attempt < 6; attempt += 1) {
+      const bytes = crypto.getRandomValues(new Uint8Array(3))
+      const name = `guest_${Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('')}`
+      const { error: claimError } = await client().rpc('complete_signup', { name })
+      if (!claimError) {
+        const { error: updateError } = await client().auth.updateUser({ data: { username: name } })
+        if (updateError) throw updateError
+        await client().auth.refreshSession() // so the new name is in the access token
+        return
+      }
+      if (claimError.code !== '23505') throw claimError // anything but "name taken" is a real problem
+    }
+    throw new ApiError(409, 'Couldn’t pick a guest name. Try again.')
   },
 
   async sendCode(email) {

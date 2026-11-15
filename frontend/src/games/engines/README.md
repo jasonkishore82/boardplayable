@@ -6,6 +6,10 @@ Each game lives in its own folder here, named after its id in `../catalog.ts`.
 engines/
   chess/
     index.tsx      default export: the game component (receives GameEngineProps)
+    rules.ts       the server state type and words for the player
+    Board.tsx      the board
+  tic-tac-toe/
+    index.tsx      default export: the game component (receives GameEngineProps)
     rules.ts       pure game logic, no React
     Board.tsx      3D board, rendered inside <GameCanvas> from src/three
 ```

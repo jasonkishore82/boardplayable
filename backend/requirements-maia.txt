@@ -1,0 +1,3 @@
+# Optional: the Maia chess bots. Brings in PyTorch, so it is not part of requirements.txt.
+# After installing, run: python scripts/fetch_maia.py
+maia2==0.11.0

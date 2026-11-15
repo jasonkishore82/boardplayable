@@ -1,3 +1,4 @@
+/* Flat buttons with a small radius. The focused button gets the white outline from global.css. */
 .button {
   position: relative;
   display: inline-flex;
@@ -5,18 +6,18 @@
   justify-content: center;
   height: 44px;
   padding: 0 var(--space-5);
-  border: 1px solid transparent;
+  border: 0;
   border-radius: var(--radius-sm);
-  font-weight: 500;
+  font-size: 15px;
+  font-weight: 600;
   cursor: pointer;
   transition:
     background-color var(--duration) var(--ease),
-    border-color var(--duration) var(--ease),
-    transform 80ms var(--ease);
+    transform var(--duration) var(--ease);
 }
 
 .button:active:not(:disabled) {
-  transform: scale(0.99);
+  transform: scale(0.98);
 }
 
 .button:disabled {
@@ -31,31 +32,47 @@
   background: var(--accent-hover);
 }
 .primary:disabled:not([aria-busy]) {
-  opacity: 0.5;
+  opacity: 0.4;
 }
 
 .secondary {
-  background: var(--surface);
-  border-color: var(--border-strong);
-}
-.secondary:disabled:not([aria-busy]) {
-  color: var(--text-muted);
-  background: var(--surface-sunken);
-  border-color: var(--border);
+  background: var(--btn2-from);
+  color: var(--text);
 }
 .secondary:hover:not(:disabled) {
-  background: var(--surface-sunken);
+  background: var(--overlay-strong);
+}
+.secondary:disabled:not([aria-busy]) {
+  opacity: 0.4;
 }
 
+/* A text link that looks like part of the sentence. */
 .quiet {
   height: auto;
   padding: 0;
   background: none;
-  color: var(--accent);
+  border-radius: 4px;
+  color: var(--accent-bright);
+  font-size: inherit;
+  font-weight: 500;
 }
 .quiet:hover:not(:disabled) {
   text-decoration: underline;
   text-underline-offset: 3px;
+}
+.quiet:active:not(:disabled) {
+  transform: none;
+}
+
+.danger {
+  background: #d93a4c;
+  color: #fff;
+}
+.danger:hover:not(:disabled) {
+  background: #ec4a5c;
+}
+.danger:disabled:not([aria-busy]) {
+  opacity: 0.4;
 }
 
 .block {
@@ -80,15 +97,4 @@
   to {
     transform: rotate(360deg);
   }
-}
-
-.danger {
-  background: var(--danger);
-  color: #fff;
-}
-.danger:hover:not(:disabled) {
-  filter: brightness(0.92);
-}
-.danger:disabled:not([aria-busy]) {
-  opacity: 0.45;
 }

@@ -45,4 +45,16 @@ export const TABS: Tab[] = [
       </g>
     ),
   },
+  {
+    to: '/settings',
+    label: 'Settings',
+    icon: (
+      <g {...stroke}>
+        <path d="M4 7h9M19 7h1M4 17h1M11 17h9M4 12h3M13 12h7" />
+        <circle cx="16" cy="7" r="2.25" />
+        <circle cx="8" cy="17" r="2.25" />
+        <circle cx="10" cy="12" r="2.25" />
+      </g>
+    ),
+  },
 ]

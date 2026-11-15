@@ -1,4 +1,5 @@
-import { lazy, Suspense, useEffect, useRef, useState, type FormEvent } from 'react'
+import '@fontsource-variable/playwrite-hu'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import {
   friendlyApiError,
   friendlyAuthError,
@@ -12,19 +13,19 @@ import {
 } from '../../auth/validation'
 import { Button } from '../../components/Button'
 import { TextField } from '../../components/TextField'
+import { Logo } from '../../components/Logo'
 import { Wordmark } from '../../components/Wordmark'
 import { authBackend } from '../../lib/auth'
 import { ApiError } from '../../lib/http'
 import styles from './AuthPage.module.css'
 
-const PieceScene = lazy(() => import('../../three/PieceScene'))
 
 type Mode = 'sign-in' | 'sign-up' | 'reset' | 'verify'
 
 const RESEND_SECONDS = 30
 
 const COPY: Record<Mode, { title: string; lede: string; submit: string }> = {
-  'sign-in': { title: 'Sign in', lede: 'Welcome back. Your table is waiting.', submit: 'Sign in' },
+  'sign-in': { title: 'Sign in', lede: 'Sign in to play.', submit: 'Sign in' },
   'sign-up': { title: 'Create account', lede: 'Start with your email. We’ll send a code to confirm it.', submit: 'Send code' },
   verify: { title: 'Check your email', lede: '', submit: 'Confirm email' },
   reset: { title: 'Reset password', lede: 'We’ll email you a link to choose a new one.', submit: 'Send link' },
@@ -133,6 +134,20 @@ export function AuthPage() {
     setNotice(`A new code is on its way to ${email}.${devHint(devCode)}`)
   }
 
+  async function playAsGuest() {
+    if (!authBackend) return
+    setLoading(true)
+    setFormError('')
+    try {
+      await authBackend.signInAsGuest()
+      // AuthProvider picks up the session and the router sends the guest to Games.
+    } catch (error) {
+      setFormError(describe(error))
+    } finally {
+      setLoading(false)
+    }
+  }
+
   async function submit(event: FormEvent) {
     event.preventDefault()
     const nextErrors: Errors = {}
@@ -186,10 +201,21 @@ export function AuthPage() {
 
   return (
     <div className={styles.page}>
+      {wide && (
+        <aside className={styles.stage} aria-hidden="true">
+          <Logo size={440} className={styles.bigLogo} />
+          <p className={styles.stageName}>
+            Board <span className={styles.stageDrop}>Playable</span>
+          </p>
+        </aside>
+      )}
+
       <main className={styles.panel} id="main">
-        <header className={styles.brand}>
-          <Wordmark />
-        </header>
+        {!wide && (
+          <header className={styles.brand}>
+            <Wordmark />
+          </header>
+        )}
 
         <div className={styles.formWrap}>
           <h1 ref={headingRef} tabIndex={-1} className={styles.title}>
@@ -281,6 +307,16 @@ export function AuthPage() {
             </Button>
           </form>
 
+          {(mode === 'sign-in' || mode === 'sign-up') && (
+            <div className={styles.guest}>
+              <p className={styles.guestOr}>or</p>
+              <Button type="button" variant="secondary" block loading={loading} onClick={playAsGuest}>
+                Play as guest
+              </Button>
+              <p className={styles.guestNote}>No email needed. A guest profile is temporary.</p>
+            </div>
+          )}
+
           <p className={styles.switch}>
             {mode === 'verify' ? (
               <>
@@ -308,14 +344,6 @@ export function AuthPage() {
         </div>
       </main>
 
-      {wide && (
-        <aside className={styles.stage} aria-hidden="true">
-          <Suspense fallback={null}>
-            <PieceScene />
-          </Suspense>
-          <p className={styles.caption}>Tic-tac-toe with friends, in 3D.</p>
-        </aside>
-      )}
     </div>
   )
 }

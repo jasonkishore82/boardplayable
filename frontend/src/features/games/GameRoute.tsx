@@ -11,6 +11,8 @@ export function GameRoute() {
   // An invite link looks like /games/tic-tac-toe?room=ab12cd
   const [params] = useSearchParams()
   const roomId = params.get('room') ?? undefined
+  const bot = params.get('bot') ?? undefined
+  const seat = params.get('seat') ?? undefined
   const game = getGame(gameId)
   const loader = game && game.status === 'available' ? engines[game.id] : undefined
   const Engine = useMemo(() => (loader ? lazy(loader) : null), [loader])
@@ -19,8 +21,8 @@ export function GameRoute() {
 
   if (Engine) {
     return (
-      <Suspense fallback={<p className={styles.loading}>Setting up the table…</p>}>
-        <Engine gameId={game.id} roomId={roomId} />
+      <Suspense fallback={<p className={styles.loading}>Connecting…</p>}>
+        <Engine gameId={game.id} roomId={roomId} bot={bot} seat={seat} />
       </Suspense>
     )
   }

@@ -138,7 +138,7 @@ need only plain HTTP and work fine here.
    VITE_API_URL=https://api.boardplayable.site
    ```
 4. Deploy. `frontend/vercel.json` already routes every path to the app, so deep links like
-   `/games/chess` work on refresh.
+   `/games/tic-tac-toe` work on refresh.
 
 `VITE_*` values are baked in at build time. After changing one, redeploy.
 

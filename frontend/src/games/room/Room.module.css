@@ -1,0 +1,1007 @@
+/* The frame every game shares: lobby, table, scoreboard and chat. Flat panels, small radii, white focus outline. */
+
+.lobby {
+  display: grid;
+  gap: var(--space-4);
+  justify-items: center;
+  max-width: 440px;
+  margin-inline: auto;
+  text-align: center;
+  /* Centre vertically in the space under the top bar (minus the page padding). */
+  align-content: center;
+  min-height: calc(100dvh - var(--topbar-height) - var(--space-7) - var(--space-8));
+}
+
+@media (max-width: 719px) {
+  .lobby {
+    min-height: calc(100dvh - 52px - var(--bottombar-height) - var(--space-5) - var(--space-7) - env(safe-area-inset-bottom));
+  }
+}
+
+.lobby h1 {
+  margin: 0;
+}
+
+.lede {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 16px;
+}
+
+.join {
+  display: grid;
+  gap: var(--space-3);
+  width: 100%;
+  margin-top: var(--space-5);
+  padding: var(--space-5);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.back {
+  color: var(--text-muted);
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.back:hover {
+  color: var(--text);
+}
+
+.table {
+  display: grid;
+  gap: var(--space-5);
+}
+
+/* Chess uses the whole window width, not the page's 1120px column: the board is limited by the room beside it. The
+   margin keeps the wider table centred on the window. */
+.table[data-wide] {
+  width: min(calc(100vw - 48px), 1760px);
+  margin-left: calc((100% - min(calc(100vw - 48px), 1760px)) / 2);
+}
+
+.top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.invite {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* The room code: a small label and the code itself in large, spaced-out letters. Pressing it copies the code. */
+.code {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  height: 44px;
+  padding: 0 var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color var(--duration) var(--ease), background-color var(--duration) var(--ease);
+}
+
+.code:hover {
+  background: var(--surface-raised);
+  border-color: var(--text-faint);
+}
+
+.codeLabel {
+  min-width: 76px; /* as wide as "Room code", so it doesn't jump when it says "Copied" */
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.codeValue {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  font-variant-numeric: tabular-nums;
+  text-transform: uppercase;
+}
+
+.cols {
+  display: grid;
+  gap: var(--space-5);
+  /* The moves card and the chat card share one width and one height. */
+  --panel-w: 330px;
+  --panel-height: 420px;
+}
+
+/* Chess (data-side="right") puts the side panel with the moves right of the board: board, side panel, chat. */
+.cols[data-side='right'] .play {
+  order: 1;
+}
+
+.cols[data-side='right'] .side {
+  order: 2;
+}
+
+.cols[data-side='right'] .chatBox {
+  order: 3;
+}
+
+.side {
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+}
+
+.sideTitle {
+  display: none;
+  margin: 0;
+}
+
+@media (min-width: 1100px) {
+  .cols {
+    grid-template-columns: 280px minmax(0, 1fr) 340px;
+    gap: var(--space-6);
+    align-items: start;
+    --panel-height: clamp(380px, calc(100dvh - 300px), 640px);
+  }
+
+  /* Chess: the moves and chat cards are exactly as tall as the board and start where it starts. The height is the same
+     formula as the board's (.play[data-wide] below); the offset is the player strip above the board (a 36px picture
+     and an 8px gap, see .avatar and .area in Chess.module.css). */
+  .cols[data-side='right'] {
+    grid-template-columns: minmax(0, 1fr) var(--panel-w) var(--panel-w);
+    --panel-height: clamp(480px, calc(100dvh - 268px), 1000px);
+  }
+
+  .cols[data-side='right'] .side,
+  .cols[data-side='right'] .chatBox {
+    margin-top: calc(36px + var(--space-2));
+  }
+
+  .side {
+    grid-template-columns: 1fr;
+  }
+
+  /* The chat's column stays reserved when the chat is collapsed, so the board never moves when it opens or closes. */
+
+  .chatBox {
+    position: sticky;
+    top: var(--space-4);
+  }
+
+  /* In the narrow side column the three score tiles stack instead of sitting side by side. */
+  .side .scores {
+    grid-auto-flow: row;
+    grid-auto-columns: auto;
+  }
+
+  .sideTitle {
+    display: block;
+  }
+}
+
+.play {
+  display: grid;
+  gap: var(--space-4);
+  justify-items: center;
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+/* Chess: the board takes the window's height, within 480px and 1000px wide. What is above and below it is the top bar,
+   the toolbar row, the two name strips and the gaps between them: measured at about 260px in a real browser, plus a
+   little air. (The page's own padding above and below is trimmed for this table in AppShell.module.css.) */
+.play[data-wide] {
+  max-width: clamp(480px, calc(100dvh - 268px), 1000px);
+}
+
+/* On a wide window the chess dock stands beside the board, so the column makes room for it. */
+@media (min-width: 1100px) {
+  .play[data-wide] {
+    padding-right: 108px;
+    max-width: calc(clamp(480px, calc(100dvh - 268px), 1000px) + 108px);
+  }
+}
+
+/* The wide (chess) table packs its rows a little closer, so the board can be taller. */
+.table[data-wide] {
+  gap: var(--space-3);
+}
+
+/* Nothing is reserved under the board for notices: they take room only when there is one to show. */
+.play[data-wide] .under {
+  min-height: 0;
+}
+
+/* ---------- Scores ---------- */
+
+.scores {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: var(--space-2);
+  width: 100%;
+  margin: 0;
+}
+
+.scores > div {
+  padding: var(--space-3) var(--space-2);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  text-align: center;
+}
+
+.scores dt {
+  color: var(--text-muted);
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scores dd {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Whose turn it is: a white outline, like a focused item on the console. */
+.activeScore {
+  border-color: transparent !important;
+  box-shadow: 0 0 0 2px var(--focus);
+}
+
+/* ---------- Status ---------- */
+
+.status {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.under {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: center;
+  min-height: 48px;
+}
+
+.problem {
+  margin: 0;
+  color: var(--danger);
+  font-size: 14px;
+}
+
+.muted {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+/* ---------- Chat panel ---------- */
+
+.chatBox {
+  display: flex;
+  flex-direction: column;
+  height: var(--panel-height);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+.chatTitle {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  font-size: 15px;
+}
+
+.chatHead {
+  display: flex;
+  align-items: center;
+  min-height: 64px;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+}
+
+.chatHeadText {
+  padding: var(--space-3) var(--space-4);
+}
+
+.chatHeadSub {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 2px 0 0;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.onlineDot {
+  width: 8px;
+  height: 8px;
+  background: #2fb36d;
+  border-radius: 50%;
+}
+
+.chatHeadTitle {
+  margin: 0;
+  padding: 0;
+  color: var(--text);
+  font-size: 15px;
+}
+
+.chatCollapse {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  margin-right: var(--space-2);
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.chatCollapse:hover {
+  background: var(--overlay);
+  color: var(--text);
+}
+
+/* The closed chat: a button in the bottom-right corner. */
+.chatFab {
+  position: fixed;
+  right: var(--space-5);
+  bottom: var(--space-5);
+  z-index: 20;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 10px var(--space-5);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  box-shadow: var(--shadow-card);
+  color: var(--text);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.chatFab:hover,
+.chatFab:focus-visible {
+  box-shadow: 0 0 0 2px var(--focus), var(--shadow-card);
+  outline: none;
+}
+
+.chatBadge {
+  min-width: 20px;
+  padding: 0 6px;
+  background: var(--accent);
+  border-radius: 999px;
+  color: #fff;
+  font-size: 12px;
+  text-align: center;
+}
+
+@media (max-width: 719px) {
+  .chatFab {
+    bottom: calc(var(--bottombar-height) + var(--space-3));
+    right: var(--space-4);
+  }
+}
+
+.chatBody {
+  flex: 1;
+  min-height: 0;
+  padding: var(--space-3) var(--space-4) var(--space-4);
+}
+
+@media (max-width: 879px) {
+  .chatBox {
+    height: 420px;
+  }
+}
+
+/* On a wide window the chat is pinned to the right edge of the screen instead of the page's centred column.
+   The board keeps the middle. Narrower windows keep the chat beside the board. */
+@media (min-width: 1700px) {
+  .cols,
+  .cols[data-chat='open'] {
+    grid-template-columns: 280px minmax(0, 1fr);
+  }
+
+  .cols[data-side='right'] {
+    grid-template-columns: minmax(0, 1fr) var(--panel-w);
+  }
+
+  .chatBox {
+    position: fixed;
+    top: 230px;
+    right: var(--space-5);
+    z-index: 15;
+    width: var(--panel-w);
+    height: var(--panel-height);
+    min-height: 360px;
+  }
+}
+
+/* ---------- Lobby steps: Multiplayer or bot, and which bot ---------- */
+
+.choices {
+  display: grid;
+  gap: var(--space-3);
+  width: 100%;
+}
+
+.choice {
+  display: grid;
+  gap: 2px;
+  width: 100%;
+  padding: var(--space-4) var(--space-5);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition: transform var(--duration) var(--ease), box-shadow var(--duration) var(--ease), border-color var(--duration) var(--ease);
+}
+
+.choice:hover:not(:disabled),
+.choice:focus-visible {
+  transform: scale(1.01);
+  border-color: transparent;
+  box-shadow: 0 0 0 2px var(--focus);
+}
+
+.choice:focus-visible {
+  outline: none;
+}
+
+.choice:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.choiceTitle {
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.choiceDetail {
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.backButton {
+  padding: 0;
+  background: none;
+  border: 0;
+  color: var(--text-muted);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.backButton:hover {
+  color: var(--text);
+}
+
+.problemBox {
+  display: grid;
+  gap: var(--space-3);
+  justify-items: start;
+  padding: var(--space-4);
+  background: var(--danger-soft);
+  border-radius: var(--radius);
+  color: var(--danger);
+}
+
+.problemBox p {
+  margin: 0;
+}
+
+/* ---------- View bar: Standard, 3D view, Cinematic view ---------- */
+
+.viewBar {
+  display: flex;
+  justify-content: center;
+}
+
+.viewBar ul {
+  display: inline-flex;
+  gap: 2px;
+  margin: 0;
+  padding: 3px;
+  list-style: none;
+  background: var(--overlay);
+  border-radius: var(--radius);
+}
+
+.viewTab {
+  padding: 7px var(--space-4);
+  background: none;
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color var(--duration) var(--ease), background-color var(--duration) var(--ease);
+}
+
+.viewTab:hover {
+  color: var(--text);
+}
+
+.viewTabActive,
+.viewTabActive:hover {
+  background: var(--text);
+  color: var(--bg);
+  font-weight: 600;
+}
+
+@media (max-width: 560px) {
+  .viewTab {
+    padding: 7px var(--space-3);
+    font-size: 13px;
+  }
+}
+
+.exports {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* Icon-only buttons for the exports: a curved square, like the other pictures and buttons. */
+.exportButton {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  background: var(--overlay);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text);
+  cursor: pointer;
+  transition:
+    background-color var(--duration) var(--ease),
+    border-color var(--duration) var(--ease);
+}
+
+.exportButton:hover:not(:disabled) {
+  background: var(--overlay-strong);
+  border-color: var(--border-strong);
+}
+
+.exportButton:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.exportButton:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.exportButton[data-busy] {
+  animation: export-busy 1s ease-in-out infinite;
+}
+
+@keyframes export-busy {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+/* The flat board's wrapper. It is as wide as the board always was; it only gives a capture something to aim at. */
+.boardCapture {
+  width: 100%;
+}
+
+/* ---------- 3D and cinematic stage ---------- */
+
+.play[data-view='3d'],
+.play[data-view='cinematic'] {
+  max-width: 780px;
+}
+
+.stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: radial-gradient(70% 60% at 50% 30%, rgb(0 112 209 / 0.18), transparent 70%), #070a12;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  touch-action: none;
+}
+
+.stage[data-view='cinematic'] {
+  aspect-ratio: 16 / 9;
+}
+
+.stage canvas {
+  display: block;
+}
+
+.stage:fullscreen {
+  width: 100vw;
+  height: 100vh;
+  aspect-ratio: auto;
+  border: 0;
+  border-radius: 0;
+}
+
+.stageNote {
+  display: grid;
+  gap: var(--space-3);
+  justify-items: center;
+  align-content: center;
+  height: 100%;
+  padding: var(--space-5);
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.stageNote p {
+  margin: 0;
+}
+
+.stageHint {
+  position: absolute;
+  left: 50%;
+  top: var(--space-3);
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 3px var(--space-3);
+  background: rgb(0 0 0 / 0.55);
+  border-radius: var(--radius-sm);
+  color: #dfe5f2;
+  font-size: 12px;
+  pointer-events: none;
+}
+
+/* The same dock as the standard view, along the bottom of the stage. */
+.stageDock {
+  position: absolute;
+  inset: auto 0 0 0;
+  z-index: 3;
+  height: 96px;
+  pointer-events: none;
+}
+
+.stageDock > * {
+  pointer-events: auto;
+}
+
+.stageTool {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-width: 36px;
+  height: 36px;
+  padding: 0 var(--space-3);
+  background: rgb(10 14 26 / 0.7);
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  transition: background-color var(--duration) var(--ease);
+}
+
+.stageTool:hover {
+  background: rgb(10 14 26 / 0.92);
+}
+
+.stageTool:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.stageBadge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  background: #ff4d5e;
+  border-radius: 9px;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+}
+
+/* Chat while playing in full screen: a panel on the right that opens from the chat button. */
+.stageChat {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  width: min(260px, calc(100% - var(--space-5)));
+  height: min(380px, calc(100% - var(--space-5)));
+  zoom: 0.9;
+  background: rgb(14 19 33 / 0.94);
+  border: 1px solid #2d3652;
+  border-radius: var(--radius-lg);
+  color: #fff;
+  backdrop-filter: blur(12px);
+  overflow: hidden;
+  /* The chat styles use the app's colours; keep them readable on this dark panel in either theme. */
+  --text: #ffffff;
+  --text-muted: #aab3ca;
+  --text-faint: #7b86a3;
+  --overlay-strong: rgb(255 255 255 / 0.13);
+  --border: #2d3652;
+  --border-strong: #3d4768;
+  --surface-sunken: #0d1220;
+  --accent: #0070d1;
+  --accent-bright: #5aaaff;
+  --accent-soft: rgb(90 170 255 / 0.18);
+  --accent-text: #fff;
+  --focus: #fff;
+}
+
+.stageChatHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2) var(--space-3) var(--space-2) var(--space-4);
+  border-bottom: 1px solid #2d3652;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.stageChatClose {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: #aab3ca;
+  cursor: pointer;
+}
+
+.stageChatClose:hover {
+  background: rgb(255 255 255 / 0.1);
+  color: #fff;
+}
+
+.stageChatBody {
+  flex: 1;
+  min-height: 0;
+  padding: var(--space-2) var(--space-3) var(--space-3);
+}
+
+/* Cinematic: film bars, a darkened edge, and a caption for the latest move. */
+.letterboxTop,
+.letterboxBottom {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 11%;
+  background: #000;
+  pointer-events: none;
+}
+
+.letterboxTop {
+  top: 0;
+}
+
+.letterboxBottom {
+  bottom: 0;
+}
+
+.vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 60%, rgb(0 0 0 / 0.45) 100%);
+  pointer-events: none;
+}
+
+.caption {
+  position: absolute;
+  left: var(--space-5);
+  bottom: calc(11% + var(--space-3));
+  margin: 0;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 600;
+  text-shadow: 0 1px 10px rgb(0 0 0 / 0.8);
+  pointer-events: none;
+}
+
+/* ---------- Bot picker: a portrait on every row and a large preview on top ---------- */
+
+.botPreview {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  padding: var(--space-4) var(--space-5);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.botPreviewText {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  text-align: left;
+}
+
+.botPreviewName {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.choiceWithAvatar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.choiceText {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+/* The back link in the lobby is a small pill, so it reads as a control rather than stray text above the title. */
+.lobby .back,
+.lobby .backButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: var(--space-3);
+  padding: 6px 14px 6px 11px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text) 5%, transparent);
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+  transition: color var(--duration) var(--ease), background var(--duration) var(--ease);
+}
+
+.lobby .back:hover,
+.lobby .backButton:hover {
+  color: var(--text);
+  background: color-mix(in srgb, var(--text) 10%, transparent);
+}
+
+.back svg,
+.backButton svg {
+  flex: none;
+  transition: transform var(--duration) var(--ease);
+}
+
+.back:hover svg,
+.backButton:hover svg {
+  transform: translateX(-2px);
+}
+
+/* 2D / 3D board choice in the lobby. */
+.viewChoice {
+  display: inline-flex;
+  gap: 2px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text) 5%, transparent);
+}
+
+.viewChoiceItem {
+  padding: 7px 16px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--text-faint);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color var(--duration) var(--ease), background var(--duration) var(--ease);
+}
+
+.viewChoiceItem:hover {
+  color: var(--text);
+}
+
+.viewChoiceActive,
+.viewChoiceActive:hover {
+  background: var(--text);
+  color: var(--bg);
+  font-weight: 600;
+}
+
+/* ---------- Bot picker as cards: a grid of square cards with curved corners ---------- */
+
+.lobbyWide {
+  max-width: 640px;
+}
+
+.choiceGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* The preview and any message span the whole grid; only the bots are cards. */
+.choiceGrid > :not(.choice) {
+  grid-column: 1 / -1;
+}
+
+/* Square: the picture on top, the name and one or two lines about the bot centred under it. A card grows taller
+   only if its words do not fit. */
+.choiceCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  aspect-ratio: 1;
+  padding: var(--space-4);
+  border-radius: 22px;
+  text-align: center;
+}
+
+.choiceCard .choiceText {
+  justify-items: center;
+}
+
+.choiceCard .choiceTitle {
+  font-size: 16px;
+}
+
+.choiceCard .choiceDetail {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 12.5px;
+  line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+@media (max-width: 560px) {
+  .choiceGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .choiceCard {
+    padding: var(--space-3);
+  }
+}

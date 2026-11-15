@@ -10,6 +10,8 @@ export type RoomChatMessage = {
   username: string | null
   text: string
   at: string
+  /** A note from the room itself, such as "Game 2 started". */
+  system?: boolean
 }
 
 export type RoomStatus = 'connecting' | 'open' | 'reconnecting' | 'failed'
@@ -26,7 +28,10 @@ type ServerMessage =
 
 // Connects to a live room over a WebSocket and keeps the table, the player list and the chat up to date.
 // `roomId` is the full server id, for example "tic-tac-toe:ab12cd". The game state type is up to the caller.
-export function useRoom<State>(roomId: string) {
+// `seat` is the side the player would like, in games that let them choose (chess).
+export function useRoom<State>(roomId: string, options: { bot?: string; seat?: string } = {}) {
+  const bot = options.bot
+  const seat = options.seat
   const [status, setStatus] = useState<RoomStatus>('connecting')
   const [players, setPlayers] = useState<RoomPlayer[]>([])
   const [game, setGame] = useState<State | null>(null)
@@ -84,7 +89,7 @@ export function useRoom<State>(roomId: string) {
         return
       }
 
-      const ws = new WebSocket(roomSocketUrl(roomId, session.accessToken))
+      const ws = new WebSocket(roomSocketUrl(roomId, session.accessToken, { ...(bot ? { bot } : {}), ...(seat ? { seat } : {}) }))
       socket.current = ws
       ws.onopen = () => {
         attempt = 0
@@ -118,7 +123,9 @@ export function useRoom<State>(roomId: string) {
       socket.current?.close()
       socket.current = null
     }
-  }, [roomId])
+    // `seat` is left out on purpose: it only matters when first sitting down, and reconnecting over it would
+    // drop the table.
+  }, [roomId, bot])
 
   const send = useCallback((message: Record<string, unknown>) => {
     const ws = socket.current

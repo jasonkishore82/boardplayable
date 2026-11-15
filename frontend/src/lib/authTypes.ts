@@ -5,6 +5,10 @@ export type AppUser = {
   email: string
   username: string | null
   createdAt: string
+  /** Playing without an account: no email, and the profile is temporary. */
+  isGuest: boolean
+  /** The player's profile picture, when they have one. */
+  avatarUrl?: string | null
 }
 
 export type AppSession = {
@@ -20,6 +24,8 @@ export interface AuthBackend {
   /** Called whenever the session changes. Returns an unsubscribe function. */
   onChange(callback: (session: AppSession | null, event?: AuthEvent) => void): () => void
   signInWithPassword(email: string, password: string): Promise<void>
+  /** Start playing at once with a temporary name. No email, no password. */
+  signInAsGuest(): Promise<void>
   /** Emails a 6-digit code. In local mode it also returns the code so it can be shown on screen. */
   sendCode(email: string): Promise<{ devCode?: string }>
   /** Checks the code and signs the user in. */

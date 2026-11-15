@@ -8,9 +8,10 @@ export function GameCanvas({ children, ...props }: CanvasProps) {
       dpr={[1, 2]}
       shadows
       camera={{ position: [0, 4.5, 6], fov: 35 }}
-      gl={{ antialias: true, alpha: true }}
+      gl={{ antialias: true, alpha: true, preserveDrawingBuffer: true }}
       {...props}
     >
+      <color attach="background" args={['#ffffff']} />
       {children}
     </Canvas>
   )

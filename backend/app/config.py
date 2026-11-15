@@ -30,6 +30,11 @@ class Settings(BaseSettings):
     local_db_path: str = "local.db"
     local_jwt_secret: str = "local-dev-secret-not-for-production-use-0123456789"
 
+    # Where the jkw Chess Bot's trained table is. Empty means backend/bots/jkw_chess_bot.pkl.
+    custom_bot_path: str = ""
+    # Where the Maia chess bot's weights live. Empty means backend/maia2_models/.
+    maia_model_dir: str = ""
+
     # Comma-separated list of front-end origins allowed to call the API.
     cors_origins: str = ""
 

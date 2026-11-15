@@ -12,17 +12,35 @@ class MoveError(Exception):
 
 @dataclass
 class TicTacToe:
+    SEATS = ("X", "O")
+    SUPPORTS_BOT = True
+    SWAP_ON_REMATCH = False
+
     board: list[str | None] = field(default_factory=lambda: [None] * 9)
     turn: str = "X"
     winner: str | None = None  # "X", "O" or "draw"
     line: tuple[int, int, int] | None = None
     round: int = 1
     moves: int = 0  # moves played in the current round
+    history: list[str] = field(default_factory=list)  # this round's moves, e.g. ["X5", "O1"]
     scores: dict[str, int] = field(default_factory=lambda: {"X": 0, "O": 0, "draw": 0})
 
     @property
     def started(self) -> bool:
         return self.moves > 0 or self.round > 1
+
+    def apply(self, data: dict[str, Any], seat: str) -> None:
+        """Entry point for the room server: data is the player's move message."""
+        self.play(data.get("cell"), seat)
+
+    def bot_move(self, bot: Any, seat: str) -> dict[str, Any]:
+        """Ask a computer opponent for its move. A bot that picks a taken square plays the first free one."""
+        free = [i for i, cell in enumerate(self.board) if cell is None]
+        try:
+            cell = bot.choose(list(self.board), seat)
+        except Exception:
+            cell = -1
+        return {"cell": cell if cell in free else free[0]}
 
     def play(self, cell: Any, mark: str) -> None:
         if self.winner:
@@ -36,6 +54,7 @@ class TicTacToe:
 
         self.board[cell] = mark
         self.moves += 1
+        self.history.append(f"{mark}{cell + 1}")
         for a, b, c in LINES:
             if self.board[a] == self.board[b] == self.board[c] == mark:
                 self.winner, self.line = mark, (a, b, c)
@@ -53,6 +72,7 @@ class TicTacToe:
         self.round += 1
         self.board = [None] * 9
         self.winner, self.line, self.moves = None, None, 0
+        self.history = []
         # The player who went second last time goes first.
         self.turn = "X" if self.round % 2 == 1 else "O"
 
@@ -63,5 +83,6 @@ class TicTacToe:
             "winner": self.winner,
             "line": list(self.line) if self.line else None,
             "round": self.round,
+            "history": list(self.history),
             "scores": dict(self.scores),
         }

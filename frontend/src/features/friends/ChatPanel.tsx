@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../../auth/AuthProvider'
+import { Avatar } from '../../components/Avatar'
+import { BackArrow } from '../../games/room/BackArrow'
 import { ChatView, type ChatLine } from '../../components/chat/ChatView'
 import { ApiError } from '../../lib/http'
 import { social } from '../../lib/social'
@@ -72,11 +74,9 @@ export function ChatPanel({ friend, onBack }: { friend: Friend; onBack: () => vo
     <div className={styles.panel}>
       <header className={styles.head}>
         <button type="button" className={styles.back} onClick={onBack} aria-label="Back to friends">
-          <span aria-hidden="true">←</span>
+          <BackArrow size={18} />
         </button>
-        <div className={styles.avatar} aria-hidden="true">
-          {friend.username.slice(0, 1).toUpperCase()}
-        </div>
+        <Avatar name={friend.username} size={40} />
         <h2 className={styles.name}>{friend.username}</h2>
       </header>
       <div className={styles.body}>

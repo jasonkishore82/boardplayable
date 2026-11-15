@@ -53,14 +53,17 @@ describe('canPlay', () => {
 })
 
 describe('room codes', () => {
-  it('makes six safe characters', () => {
-    expect(newRoomCode()).toMatch(/^[a-hj-km-np-z2-9]{6}$/)
+  it('makes six digits', () => {
+    expect(newRoomCode()).toMatch(/^\d{6}$/)
   })
 
   it('reads a code or a pasted link', () => {
-    expect(parseRoomCode(' AB12cd ')).toBe('ab12cd')
-    expect(parseRoomCode('https://boardplayable.site/games/tic-tac-toe?room=ab12cd')).toBe('ab12cd')
+    expect(parseRoomCode(' 048 215 ')).toBe('048215')
+    expect(parseRoomCode('https://boardplayable.site/games/tic-tac-toe?room=048215')).toBe('048215')
     expect(parseRoomCode('no')).toBeNull()
+    expect(parseRoomCode('12345')).toBeNull()
+    expect(parseRoomCode('1234567')).toBeNull()
+    expect(parseRoomCode('ab12cd')).toBeNull()
     expect(parseRoomCode('not a code!')).toBeNull()
   })
 })

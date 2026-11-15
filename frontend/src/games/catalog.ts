@@ -1,7 +1,7 @@
 // The game library. Every screen that lists games reads from here,
 // so adding a game is one new entry in GAMES.
 
-export type CategoryId = 'classic'
+export type CategoryId = 'strategy' | 'classic'
 
 export type Game = {
   /** URL-safe id, also used as the folder name under src/games/engines/. */
@@ -16,17 +16,58 @@ export type Game = {
 }
 
 export const CATEGORIES: { id: CategoryId; label: string }[] = [
+  { id: 'strategy', label: 'Strategy' },
   { id: 'classic', label: 'Classic' },
 ]
 
 export const GAMES: Game[] = [
   {
+    id: 'chess',
+    name: 'Chess',
+    description: 'Two players, one king each. Checkmate to win.',
+    category: 'strategy',
+    players: { min: 2, max: 2 },
+    status: 'available',
+  },
+  {
     id: 'tic-tac-toe',
     name: 'Tic-tac-toe',
-    description: 'Three in a row. Over in a minute, rematch in two.',
+    description: 'Get three in a row before your opponent does.',
     category: 'classic',
     players: { min: 2, max: 2 },
     status: 'available',
+  },
+  {
+    id: 'warship',
+    name: 'Warship',
+    description: 'Hide your fleet, call your shots, sink theirs first.',
+    category: 'strategy',
+    players: { min: 2, max: 2 },
+    status: 'coming-soon',
+  },
+  {
+    id: 'snakes-and-ladders',
+    name: 'Snakes and ladders',
+    description: 'Roll the dice, climb the ladders, dodge the snakes.',
+    category: 'classic',
+    players: { min: 2, max: 2 },
+    status: 'coming-soon',
+  },
+  {
+    id: 'game-of-life',
+    name: 'The Game of Life',
+    description: 'Spin the wheel and take on careers, family and fortune on the road to retirement.',
+    category: 'classic',
+    players: { min: 2, max: 6 },
+    status: 'coming-soon',
+  },
+  {
+    id: 'one-card',
+    name: 'One Card',
+    description: 'Match the colour or number, play your cards, and shout when you are down to one.',
+    category: 'classic',
+    players: { min: 2, max: 10 },
+    status: 'coming-soon',
   },
 ]
 

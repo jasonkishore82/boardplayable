@@ -8,7 +8,7 @@ const KEY = 'bp_local_session'
 
 type Payload = {
   access_token: string
-  user: { id: string; email: string; username: string | null; created_at: string }
+  user: { id: string; email: string; username: string | null; created_at: string; avatar_url?: string | null }
 }
 
 type Listener = (session: AppSession | null) => void
@@ -45,6 +45,8 @@ function fromPayload(payload: Payload): AppSession {
       email: payload.user.email,
       username: payload.user.username,
       createdAt: payload.user.created_at,
+      isGuest: payload.user.email.endsWith('@guest.local'),
+      avatarUrl: payload.user.avatar_url ?? null,
     },
   }
 }
@@ -77,6 +79,10 @@ export const localAuth: AuthBackend = {
 
   async signInWithPassword(email, password) {
     save(fromPayload(await request<Payload>('/v1/local/signin', { method: 'POST', body: JSON.stringify({ email, password }) })))
+  },
+
+  async signInAsGuest() {
+    save(fromPayload(await request<Payload>('/v1/local/guest', { method: 'POST' })))
   },
 
   async sendCode(email) {

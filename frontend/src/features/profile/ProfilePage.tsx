@@ -1,10 +1,13 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { useAuth } from '../../auth/AuthProvider'
+import { Avatar } from '../../components/Avatar'
 import { Button } from '../../components/Button'
 import { PageHeader } from '../../components/PageHeader'
 import { Section } from '../../components/Section'
 import { TextField } from '../../components/TextField'
 import { authBackend } from '../../lib/auth'
+import { userAvatarUrl } from '../../lib/avatars'
+import { BackdropPicker } from './BackdropPicker'
 import styles from './ProfilePage.module.css'
 
 type Stats = { played: number; won: number }
@@ -56,17 +59,16 @@ export function ProfilePage() {
   const won = stats?.won ?? 0
 
   return (
-    <>
-      <PageHeader title="Profile" />
+    // The page sits on a white sheet with curved corners and a soft shadow, in the light colours, whatever the backdrop.
+    <div className={styles.sheet} data-theme="light">
+      <PageHeader title="Settings" />
 
       <div className={styles.identity}>
-        <div className={styles.avatar} aria-hidden="true">
-          {name.slice(0, 1).toUpperCase()}
-        </div>
+        <Avatar name={name} src={userAvatarUrl(user?.avatarUrl)} size={88} />
         <div>
           <p className={styles.name}>{name}</p>
           <p className={styles.meta}>
-            {user?.email}
+            {user?.isGuest ? 'Guest · no email' : user?.email}
             {joined && <> · Joined {joined}</>}
           </p>
         </div>
@@ -80,9 +82,13 @@ export function ProfilePage() {
         </dl>
       </Section>
 
+      <Section title="Backdrop">
+        <BackdropPicker />
+      </Section>
+
       <Section title="Account">
         <div className={styles.account}>
-          <p className={styles.meta}>Avatar and username changes are coming soon.</p>
+          <p className={styles.meta}>Changing your profile picture and username is coming soon.</p>
           <Button
             variant="secondary"
             loading={signingOut}
@@ -135,7 +141,7 @@ export function ProfilePage() {
           )}
         </div>
       </Section>
-    </>
+    </div>
   )
 }
 

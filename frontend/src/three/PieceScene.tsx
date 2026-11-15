@@ -1,6 +1,7 @@
 import { useFrame } from '@react-three/fiber'
 import { useMemo, useRef } from 'react'
 import { LatheGeometry, Vector2, type Group } from 'three'
+import { useTheme } from '../lib/theme'
 import { GameCanvas } from './GameCanvas'
 
 // A single chess pawn on a small patch of board. Turns slowly; still when reduced motion is on.
@@ -63,8 +64,8 @@ function Scene({ dark, still }: { dark: boolean; still: boolean }) {
     if (!still && group.current) group.current.rotation.y += delta * 0.12
   })
   const palette = dark
-    ? { light: '#3a3a37', dark: '#1f5c45', pawn: '#e6e4de' }
-    : { light: '#ecebe6', dark: '#2c6b53', pawn: '#fbfaf7' }
+    ? { light: '#2a2f66', dark: '#1d8f6c', pawn: '#f2f3ff' }
+    : { light: '#e3e6fb', dark: '#46c9a0', pawn: '#2a2f66' }
 
   return (
     <>
@@ -87,7 +88,8 @@ function Scene({ dark, still }: { dark: boolean; still: boolean }) {
 }
 
 export default function PieceScene() {
-  const dark = window.matchMedia('(prefers-color-scheme: dark)').matches
+  const [theme] = useTheme()
+  const dark = theme === 'dark'
   const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   return (
     <GameCanvas camera={{ position: [0, 6.2, 10.5], fov: 28 }} onCreated={({ camera }) => camera.lookAt(0, 0.2, 0)}>

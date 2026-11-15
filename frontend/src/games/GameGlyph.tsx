@@ -19,7 +19,7 @@ const glyphs: Record<string, ReactNode> = {
       <rect x="24" y="24" width="16" height="16" fill="currentColor" stroke="none" opacity="0.14" />
     </g>
   ),
-  battleship: (
+  warship: (
     <g {...common}>
       <rect x="8" y="8" width="32" height="32" rx="3" />
       <path d="M8 18.7h32M8 29.3h32M18.7 8v32M29.3 8v32" opacity="0.45" />
@@ -29,9 +29,24 @@ const glyphs: Record<string, ReactNode> = {
   ),
   'snakes-and-ladders': (
     <g {...common}>
-      <rect x="8" y="8" width="32" height="32" rx="3" />
-      <path d="M15 36V14M23 36V14M15 20h8M15 27h8M15 33h8" />
-      <path d="M33 13c-4 3 4 6 0 9s4 6 0 9-2 5-2 5" />
+      <path d="M12 40L20 8M22 40L30 8M14.2 31h8M16.4 22h8M18.6 13h8" />
+      <path d="M40 10c-6 0-6 6-1 8s5 8-2 9-7 7-1 9" />
+      <circle cx="40" cy="10" r="1.5" fill="currentColor" stroke="none" />
+    </g>
+  ),
+  'game-of-life': (
+    <g {...common}>
+      <circle cx="24" cy="24" r="15" />
+      <path d="M24 9v30M9 24h30M13.4 13.4l21.2 21.2M34.6 13.4L13.4 34.6" opacity="0.45" />
+      <path d="M24 24l7-10" />
+      <circle cx="24" cy="24" r="2.5" fill="currentColor" stroke="none" />
+    </g>
+  ),
+  'one-card': (
+    <g {...common}>
+      <rect x="9" y="12" width="18" height="26" rx="3" transform="rotate(-12 18 25)" opacity="0.45" />
+      <rect x="18" y="10" width="20" height="28" rx="3" transform="rotate(8 28 24)" />
+      <path d="M27 20l3-2v12" transform="rotate(8 28 24)" />
     </g>
   ),
   'tic-tac-toe': (
@@ -39,13 +54,6 @@ const glyphs: Record<string, ReactNode> = {
       <path d="M19 9v30M29 9v30M9 19h30M9 29h30" />
       <path d="M11.5 11.5l5 5M16.5 11.5l-5 5" />
       <circle cx="34" cy="34" r="2.75" />
-    </g>
-  ),
-  cards: (
-    <g {...common}>
-      <rect x="12" y="12" width="18" height="26" rx="2.5" transform="rotate(-8 21 25)" />
-      <rect x="19" y="10" width="18" height="26" rx="2.5" fill="var(--surface)" />
-      <path d="M28 20l2.5 3-2.5 3-2.5-3z" />
     </g>
   ),
 }

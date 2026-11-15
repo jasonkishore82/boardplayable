@@ -11,7 +11,8 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
 }
 
 // WebSocket URL for a live room, derived from the API URL.
-export function roomSocketUrl(roomId: string, accessToken: string): string {
+export function roomSocketUrl(roomId: string, accessToken: string, extra: Record<string, string> = {}): string {
   const base = env.apiUrl.replace(/^http/, 'ws')
-  return `${base}/v1/rooms/${encodeURIComponent(roomId)}?token=${encodeURIComponent(accessToken)}`
+  const params = new URLSearchParams({ token: accessToken, ...extra })
+  return `${base}/v1/rooms/${encodeURIComponent(roomId)}?${params}`
 }

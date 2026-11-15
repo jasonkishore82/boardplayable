@@ -5,6 +5,7 @@ email code -> account -> username and password -> signed-in session (a JWT signe
 """
 
 import re
+import secrets
 import sqlite3
 import time
 import uuid
@@ -27,6 +28,8 @@ router = APIRouter(prefix="/v1/local", tags=["local mode"])
 
 USERNAME = re.compile(r"^[a-z0-9_]{3,20}$")
 TOKEN_DAYS = 7
+# Guests have no real email. This made-up address ends in .local so it can never receive mail.
+GUEST_DOMAIN = "guest.local"
 
 
 class CompleteBody(BaseModel):
@@ -45,7 +48,7 @@ class PasswordBody(BaseModel):
 
 def session_payload(settings: Settings, conn: sqlite3.Connection, user_id: str) -> dict[str, Any]:
     row = conn.execute(
-        "select u.id, u.email, u.created_at, p.username from users u "
+        "select u.id, u.email, u.created_at, p.username, p.avatar_url from users u "
         "left join profiles p on p.id = u.id where u.id = ?",
         (user_id,),
     ).fetchone()
@@ -71,6 +74,7 @@ def session_payload(settings: Settings, conn: sqlite3.Connection, user_id: str) 
             "email": row["email"],
             "username": row["username"],
             "created_at": row["created_at"],
+            "avatar_url": row["avatar_url"],
         },
     }
 
@@ -95,6 +99,24 @@ async def verify_code(
         user_id = row["id"] if row else str(uuid.uuid4())
         if row is None:
             conn.execute("insert into users (id, email, created_at) values (?, ?, ?)", (user_id, email, now_iso()))
+        return session_payload(settings, conn, user_id)
+
+
+@router.post("/guest")
+def guest(settings: Settings = Depends(get_settings)) -> dict[str, Any]:
+    """Start playing at once, with no email and no password: a temporary player named guest_xxxxxx."""
+    with session(settings.local_db_path) as conn:
+        for _ in range(8):
+            name = f"guest_{secrets.token_hex(3)}"
+            if not conn.execute("select 1 from profiles where username = ?", (name,)).fetchone():
+                break
+        else:
+            raise HTTPException(503, "Couldn't pick a guest name. Try again.")
+        user_id = str(uuid.uuid4())
+        now = now_iso()
+        conn.execute("insert into users (id, email, created_at) values (?, ?, ?)", (user_id, f"{user_id}@{GUEST_DOMAIN}", now))
+        conn.execute("insert into profiles (id, username, created_at, updated_at) values (?, ?, ?, ?)", (user_id, name, now, now))
+        ensure_bot_friend(conn, user_id)
         return session_payload(settings, conn, user_id)
 
 

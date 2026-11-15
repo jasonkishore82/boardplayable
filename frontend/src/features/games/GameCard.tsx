@@ -1,21 +1,29 @@
 import { Link } from 'react-router-dom'
-import { formatPlayers, type Game } from '../../games/catalog'
+import type { Game } from '../../games/catalog'
 import { GameGlyph } from '../../games/GameGlyph'
 import styles from './GameCard.module.css'
 
-export function GameCard({ game }: { game: Game }) {
+type Props = {
+  game: Game
+  /** The tile the home screen is describing: it is larger and outlined. */
+  focused: boolean
+  /** Called when the tile is pointed at or focused. */
+  onFocus: () => void
+}
+
+// One square tile in the row of games on the home screen.
+export function GameCard({ game, focused, onFocus }: Props) {
   const soon = game.status === 'coming-soon'
   return (
-    <Link to={`/games/${game.id}`} className={styles.card}>
-      <div className={styles.top}>
-        <span className={styles.glyph}>
-          <GameGlyph id={game.id} />
-        </span>
-        {soon && <span className={styles.badge}>Coming soon</span>}
-      </div>
-      <h3 className={styles.name}>{game.name}</h3>
-      <p className={styles.description}>{game.description}</p>
-      <p className={styles.players}>{formatPlayers(game.players)}</p>
+    <Link
+      to={`/games/${game.id}`}
+      className={[styles.card, focused && styles.focused, soon && styles.soon].filter(Boolean).join(' ')}
+      aria-label={`${game.name}${soon ? ', coming soon' : ''}. ${game.description}`}
+      onMouseEnter={onFocus}
+      onFocus={onFocus}
+    >
+      <GameGlyph id={game.id} size={64} />
+      <span className={styles.name}>{game.name}</span>
     </Link>
   )
 }

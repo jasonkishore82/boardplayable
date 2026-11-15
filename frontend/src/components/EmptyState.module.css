@@ -1,12 +1,12 @@
 .empty {
   padding: var(--space-6) var(--space-5);
-  border: 1px dashed var(--border-strong);
+  background: var(--overlay);
   border-radius: var(--radius);
   text-align: center;
 }
 
 .title {
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .body {

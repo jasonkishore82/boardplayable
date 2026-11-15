@@ -4,6 +4,7 @@ import { RedirectIfAuthed, RequireAuth } from './auth/RequireAuth'
 import { FriendsPage } from './features/friends/FriendsPage'
 import { GameRoute } from './features/games/GameRoute'
 import { GamesPage } from './features/games/GamesPage'
+import { MyProfilePage } from './features/profile/MyProfilePage'
 import { ProfilePage } from './features/profile/ProfilePage'
 import { missingEnv } from './lib/env'
 import { AuthPage } from './pages/auth/AuthPage'
@@ -29,7 +30,8 @@ export function App() {
             <Route path="/games" element={<GamesPage />} />
             <Route path="/games/:gameId" element={<GameRoute />} />
             <Route path="/friends/:friendId?" element={<FriendsPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/profile" element={<MyProfilePage />} />
+            <Route path="/settings" element={<ProfilePage />} />
           </Route>
         </Route>
 

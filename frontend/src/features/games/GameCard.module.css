@@ -1,82 +1,65 @@
+/* A square tile in the row of games. The selected tile is larger and has a white outline with a gap around it, like
+   the PS5 home screen. Tiles grow from their bottom edge (the row lines them up along the bottom). */
 .card {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  padding: var(--space-5);
-  background: var(--surface);
+  display: grid;
+  grid-template-rows: 1fr auto;
+  place-items: center;
+  width: var(--tile);
+  height: var(--tile);
+  padding: 12% 8% 8%;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-card);
+  border-radius: var(--radius-lg);
+  color: var(--text);
   text-decoration: none;
+  /* The outline is always there but invisible and tight to the tile, so it can ease outward when selected. */
+  outline: 2px solid transparent;
+  outline-offset: 0;
   transition:
-    border-color var(--duration) var(--ease),
-    transform var(--duration) var(--ease);
+    width 320ms var(--glide),
+    height 320ms var(--glide),
+    background-color 320ms var(--glide),
+    outline-color 320ms var(--glide),
+    outline-offset 320ms var(--glide);
 }
 
-.card:hover {
-  border-color: var(--border-strong);
-  transform: translateY(-1px);
+.card svg {
+  width: 56%;
+  height: auto;
+  transition: scale 320ms var(--glide);
 }
 
-.card:focus-visible {
-  outline-offset: 3px;
-}
-
-.top {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  margin-bottom: var(--space-6);
-}
-
-.glyph {
-  display: flex;
-  color: var(--accent);
-}
-
-.badge {
-  padding: 2px var(--space-2);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  color: var(--text-muted);
-  font-size: 12px;
-  font-weight: 500;
-  white-space: nowrap;
+.card:active svg {
+  scale: 0.92;
 }
 
 .name {
-  margin: 0;
-  font-size: 16px;
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: 12px;
   font-weight: 600;
-  letter-spacing: -0.01em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color 320ms var(--glide), font-size 320ms var(--glide);
 }
 
-.description {
-  margin-top: var(--space-1);
-  color: var(--text-muted);
+.focused {
+  width: var(--tile-focused);
+  height: var(--tile-focused);
+  background: var(--surface-raised);
+  border-color: transparent;
+  outline-color: var(--focus);
+  outline-offset: 4px;
+}
+
+.focused .name {
+  color: var(--text);
   font-size: 14px;
 }
 
-.players {
-  margin-top: auto;
-  padding-top: var(--space-4);
-  font-size: 13px;
-  font-weight: 500;
-  font-variant-numeric: tabular-nums;
-}
-
-@media (max-width: 719px) {
-  .card {
-    padding: var(--space-4) var(--space-5);
-  }
-  .top {
-    margin-bottom: var(--space-3);
-  }
-  .glyph svg {
-    width: 40px;
-    height: 40px;
-  }
-  .players {
-    padding-top: var(--space-3);
-  }
+/* Not playable yet: dimmed. */
+.soon svg,
+.soon .name {
+  opacity: 0.5;
 }

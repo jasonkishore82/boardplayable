@@ -10,6 +10,8 @@ export type TttState = {
   winner: Mark | 'draw' | null
   line: number[] | null
   round: number
+  /** This round's moves as the mark and square number, e.g. ["X5", "O1"]. */
+  history?: string[]
   scores: { X: number; O: number; draw: number }
   seats: { X: Seat; O: Seat }
 }
@@ -44,16 +46,4 @@ export function canPlay(state: TttState, myId: string | undefined, cell: number)
   return myMark(state, myId) === state.turn
 }
 
-/** A short code for an invite link: six letters and numbers. */
-export function newRoomCode(random: () => number = Math.random): string {
-  const alphabet = 'abcdefghjkmnpqrstuvwxyz23456789' // no look-alikes (i, l, o, 0, 1)
-  return Array.from({ length: 6 }, () => alphabet[Math.floor(random() * alphabet.length)]).join('')
-}
-
-/** Accepts a bare code or a pasted invite link, and returns the room code or null. */
-export function parseRoomCode(input: string): string | null {
-  const trimmed = input.trim()
-  const fromLink = trimmed.match(/[?&]room=([a-z0-9]{4,16})/i)
-  const code = (fromLink ? fromLink[1] : trimmed).toLowerCase()
-  return /^[a-z0-9]{4,16}$/.test(code) ? code : null
-}
+export { newRoomCode, parseRoomCode } from '../../room/code'

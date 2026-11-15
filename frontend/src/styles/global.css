@@ -11,17 +11,27 @@ html {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background: var(--bg);
 }
 
 body {
   margin: 0;
   min-height: 100dvh;
-  background: var(--bg);
   color: var(--text);
   font-family: var(--font-sans);
   font-size: 15px;
   line-height: 1.5;
   font-feature-settings: 'cv11', 'ss01';
+  /* One soft pool of light at the top, and a gentle fade to black. */
+  background:
+    radial-gradient(900px 480px at 80% -10%, var(--glow-a), transparent 65%),
+    radial-gradient(700px 420px at 0% 0%, var(--glow-b), transparent 60%),
+    linear-gradient(180deg, var(--page-top), var(--page-bottom));
+  background-attachment: fixed;
+}
+
+#root {
+  position: relative;
 }
 
 h1,
@@ -32,21 +42,26 @@ p {
 }
 
 h1 {
-  font-size: 28px;
-  line-height: 1.2;
+  font-size: 32px;
+  line-height: 1.15;
   font-weight: 600;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.015em;
 }
 
+/* Section titles: quiet, in sentence case. */
 h2 {
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 15px;
+  font-weight: 600;
   color: var(--text-muted);
-  letter-spacing: 0;
+}
+
+h3 {
+  font-weight: 600;
 }
 
 button,
-input {
+input,
+textarea {
   font: inherit;
   color: inherit;
 }
@@ -55,9 +70,14 @@ a {
   color: inherit;
 }
 
+::selection {
+  background: rgb(0 112 209 / 0.45);
+}
+
+/* The PlayStation focus look: a clear outline that sits just outside the control. */
 :focus-visible {
   outline: 2px solid var(--focus);
-  outline-offset: 2px;
+  outline-offset: 3px;
 }
 
 .visually-hidden {
@@ -87,6 +107,18 @@ a {
 
 .skip-link:focus {
   transform: none;
+}
+
+/* Thin, quiet scrollbars. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+@media (max-width: 719px) {
+  h1 {
+    font-size: 26px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
