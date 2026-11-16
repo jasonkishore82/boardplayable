@@ -9,7 +9,7 @@ import { FOUL_Z, GUTTER_R, LANE_W, OIL_END_Z, PIT_DEPTH, PIT_Z, bowl, createLane
 import { TV_H, TV_W, drawTV } from './tv.js'
 
 // The alley: four full-size lanes side by side, each with its own rack, ball, gutters, kickbacks and pit, a masking
-// unit over the pins with the lane number, and a TV hung over the approach showing that lane's scorecard.
+// unit over the pins with the lane number, and a TV hung over the lane showing that lane's scorecard.
 //
 // World frame: the lanes run along z like lane.js (headpins at z = 0, foul lines at z = 18.29), side by side along x.
 // Each lane's physics is in its own frame, so a lane is drawn inside a group moved along x.
@@ -23,7 +23,8 @@ const SPACING = 2.0
 export const laneX = (i) => (i - (LANES - 1) / 2) * SPACING
 const SUB = 1 / 1500
 const LANE_LEN = FOUL_Z - PIT_Z
-const TV = { y: 2.55, z: FOUL_Z + 1.2, w: 1.5, tilt: 0.24 }
+// hung 1.5 m down the lane from the foul line, so it sits in the top of the bowler's view while they aim
+const TV = { y: 2.35, z: FOUL_Z - 1.5, w: 1.5, tilt: 0.12 }
 const CEILING = 3.4
 const BALL_COLOURS = ['sapphire', 'ruby', 'emerald', 'cosmic']
 
@@ -225,7 +226,7 @@ function Lane({ index, lane, parts, aim, tv, active }) {
         <meshBasicMaterial map={num} toneMapped={false} />
       </mesh>
 
-      {/* the TV, hung from the ceiling over the approach, tipped down to the bowler */}
+      {/* the TV, hung from the ceiling just past the foul line, tipped down to the bowler */}
       <group position={[0, TV.y, TV.z]} rotation-x={-TV.tilt}>
         <mesh material={mats.tvCase} castShadow>
           <boxGeometry args={[TV.w + 0.08, (TV.w * TV_H) / TV_W + 0.08, 0.07]} />
