@@ -1,18 +1,30 @@
+import type { ReactNode } from 'react'
 import type { PhoneController } from './usePhoneController'
 import styles from './PhonePanel.module.css'
 
-// The "use your phone as the controller" card on a flying game's menu: the QR code to scan, the address, the room
+// The "use your phone as the controller" card on a game's menu (Free Fly, Free Flight, Cricket nets): the QR code to scan, the address, the room
 // code, and whether a phone is linked. Shows nothing when the relay isn't running (see usePhoneController).
-export function PhonePanel({ ctrl, gameName }: { ctrl: PhoneController; gameName: string }) {
+export function PhonePanel({
+  ctrl,
+  gameName,
+  linked = (
+    <>
+      Phone linked. Tilt to fly, then press <b>Start</b> on your phone.
+    </>
+  ),
+}: {
+  ctrl: PhoneController
+  gameName: string
+  /** What the card says once the phone is sending motion. */
+  linked?: ReactNode
+}) {
   if (!ctrl.available || !ctrl.qrSrc) return null
 
   if (ctrl.ready) {
     return (
       <div className={[styles.card, styles.linked].join(' ')} role="status">
         <i className={[styles.dot, styles.ok].join(' ')} />
-        <span>
-          Phone linked. Tilt to fly, then press <b>Start</b> on your phone.
-        </span>
+        <span>{linked}</span>
       </div>
     )
   }

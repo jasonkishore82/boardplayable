@@ -20,6 +20,8 @@ type Props = {
   bots?: boolean
   /** Let the player choose a side before starting, e.g. white or black in chess. The first one is the default. */
   sides?: { id: string; label: string }[]
+  /** More ways to play, shown under the join form (e.g. cricket's 3D nets). */
+  children?: ReactNode
 }
 
 type Step = 'home' | 'mode' | 'bot'
@@ -27,7 +29,7 @@ type Step = 'home' | 'mode' | 'bot'
 type BotInfo = { id: string; name: string; description: string; available: boolean }
 
 // /games/<id> is the lobby. /games/<id>?room=<code> is a table.
-export function Lobby({ gameId, title, lede, bots = false, sides }: Props) {
+export function Lobby({ gameId, title, lede, bots = false, sides, children }: Props) {
   const navigate = useNavigate()
   const [step, setStep] = useState<Step>('home')
   const [code, setCode] = useState('')
@@ -131,6 +133,7 @@ export function Lobby({ gameId, title, lede, bots = false, sides }: Props) {
           Join game
         </Button>
       </form>
+      {children}
     </div>
   )
 }

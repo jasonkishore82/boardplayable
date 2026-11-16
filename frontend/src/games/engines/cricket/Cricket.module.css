@@ -187,3 +187,56 @@
     animation: none;
   }
 }
+
+/* ---------- the way into the 3D nets, on the lobby ---------- */
+.netsCard {
+  position: relative;
+  display: grid;
+  gap: var(--space-1);
+  width: 100%;
+  margin-top: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  background: linear-gradient(135deg, color-mix(in srgb, #3f9a3a 22%, var(--surface)), var(--surface));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  color: var(--text);
+  text-decoration: none;
+  transition: border-color var(--duration) var(--ease);
+}
+
+.netsCard:hover {
+  border-color: #3f9a3a;
+}
+
+.netsCard:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.netsCard b {
+  font-size: 17px;
+}
+
+.netsCard span:last-child {
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.netsBadge {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  padding: 2px 8px;
+  background: #3f9a3a;
+  border-radius: 999px;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.loadingNets {
+  margin: var(--space-6) 0;
+  color: var(--text-muted);
+  text-align: center;
+}

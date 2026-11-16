@@ -4,10 +4,11 @@ import { useCallback, useEffect, useRef, useState, type RefObject } from 'react'
 // can steer it. The relay only runs with `npm run dev`; anywhere else (or on an https page, which can't open the
 // relay's plain-ws port) `available` stays false and the menu shows no QR code.
 
-export type ControllerGame = 'free-fly' | 'free-flight'
+export type ControllerGame = 'free-fly' | 'free-flight' | 'cricket'
 
 export type ControllerHandlers = {
-  /** Tilt from the phone, each axis -1..1. Free Fly also sends `boost` with every tilt. */
+  /** Tilt from the phone, each axis -1..1. Free Fly also sends `boost` with every tilt. Cricket: x across the crease,
+   *  y the swing (+1 backlift, -1 follow-through). */
   onTilt?: (x: number, y: number, boost: boolean) => void
   /** Buttons on the phone: 'primary', 'menu', 'scene', and game-specific ones. */
   onAction?: (action: string) => void

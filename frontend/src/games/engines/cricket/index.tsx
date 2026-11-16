@@ -1,14 +1,29 @@
+import { Suspense, lazy } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import type { GameEngineProps } from '../../registry'
 import { Lobby } from '../../room/Lobby'
 import roomStyles from '../../room/Room.module.css'
 import { RoomTable, ScoreBoard } from '../../room/RoomTable'
 import { Pitch } from './Pitch'
 import { sideLabel, statusLine, type CricketState } from './rules'
+import styles from './Cricket.module.css'
+
+// The 3D nets (a bowling machine, a full-size pitch and a bat you swing with your phone) load on demand, so the
+// hand-cricket table never downloads them.
+const Nets = lazy(() => import('./nets/Nets'))
 
 const GAME_ID = 'cricket'
 const TITLE = 'Cricket'
 
 export default function Cricket({ roomId, bot }: GameEngineProps) {
+  const [params] = useSearchParams()
+  if (params.get('mode') === 'nets') {
+    return (
+      <Suspense fallback={<p className={styles.loadingNets}>Setting up the nets…</p>}>
+        <Nets />
+      </Suspense>
+    )
+  }
   if (!roomId) {
     return (
       <Lobby
@@ -16,7 +31,13 @@ export default function Cricket({ roomId, bot }: GameEngineProps) {
         title={TITLE}
         lede="Hand cricket. Each ball, you both pick 1 to 6. Same number and the batter is out; otherwise they score what they picked."
         bots
-      />
+      >
+        <Link to="/games/cricket?mode=nets" className={styles.netsCard}>
+          <span className={styles.netsBadge}>3D</span>
+          <b>Practise in the nets</b>
+          <span>Face a bowling machine on a full-size pitch. Swing with the mouse, or use your phone as the bat.</span>
+        </Link>
+      </Lobby>
     )
   }
   return (
