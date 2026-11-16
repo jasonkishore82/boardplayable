@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="theme-color" content="#0b0818" />
+<title>Bowling Controller · Board Playable</title>
+<style>
+  :root { --bg:#0b0818; --card:#161130; --line:#2c2452; --text:#f3efff; --dim:#b2a8d6; --ok:#3ecf8e; --warn:#f5a524; --bad:#f2555a; --acc:#ff3fa4; --acc2:#b0287a; }
+  * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  html, body { height:100%; background:var(--bg); color:var(--text); font:15px/1.4 -apple-system, system-ui, sans-serif; overflow:hidden; touch-action:manipulation; user-select:none; -webkit-user-select:none; }
+  body {
+    padding: max(14px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(14px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+    display:grid; gap:12px;
+    grid-template-rows:auto auto 1fr auto;
+    grid-template-areas: "top" "score" "pad" "btns";
+  }
+  @media (orientation: landscape) {
+    body { grid-template-columns:1fr 1fr; grid-template-rows:auto 1fr auto; grid-template-areas: "top top" "pad score" "pad btns"; }
+  }
+  header { grid-area:top; display:flex; justify-content:space-between; align-items:center; gap:10px; }
+  h1 { font:900 17px system-ui; letter-spacing:2px; }
+  h1 span { color:var(--acc); }
+  .pill { display:flex; gap:12px; background:var(--card); border:1px solid var(--line); border-radius:999px; padding:7px 13px; font-size:12px; color:var(--dim); }
+  .pill span { display:flex; align-items:center; }
+  .dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; background:var(--bad); }
+  .dot.ok { background:var(--ok); } .dot.warn { background:var(--warn); }
+
+  .score { grid-area:score; display:grid; grid-template-columns:1fr 1fr 1fr; background:var(--card); border:1px solid var(--line); border-radius:14px; padding:10px; text-align:center; align-self:start; gap:6px; }
+  .score b { display:block; font:800 22px system-ui; font-variant-numeric:tabular-nums; }
+  .score span { color:var(--dim); font-size:11px; letter-spacing:1px; text-transform:uppercase; }
+  #last { grid-column:1 / 4; font:800 15px system-ui; letter-spacing:1px; min-height:1.4em; color:var(--acc); }
+  #last.miss { color:var(--bad); } #last.strike { color:#ffcf3a; } #last.spare { color:#3ad6ff; }
+
+  .pad { grid-area:pad; display:flex; align-items:center; justify-content:center; min-height:0; }
+  .pad { gap:16px; }
+  #ring { position:relative; width:min(52vw, 40vh, 260px); height:min(70vw, 52vh, 340px); border-radius:14px; border:2px solid var(--line); background:linear-gradient(180deg, #3a2a18, #6b4a26 40%, #c89a5c); overflow:hidden; }
+  @media (orientation: landscape) { #ring { width:min(34vw, 52vh, 260px); height:min(46vw, 70vh, 340px); } }
+  #ring::before { content:""; position:absolute; left:0; right:0; top:46%; height:2px; background:repeating-linear-gradient(90deg, #2d1a0e 0 10px, transparent 10px 22px); opacity:.6; }
+  #ball { position:absolute; left:50%; bottom:10%; width:44px; height:44px; margin-left:-22px; border-radius:50%; background:radial-gradient(circle at 35% 30%, #8fa8f2, #0d2384 60%, #061040); box-shadow:0 0 16px rgba(255,63,164,.5); transition:transform .03s linear; }
+  #meter { position:relative; width:14px; height:min(70vw, 52vh, 340px); border:1px solid var(--line); border-radius:8px; background:#120d26; overflow:hidden; flex:none; }
+  @media (orientation: landscape) { #meter { height:min(46vw, 70vh, 340px); } }
+  #meterFill { position:absolute; left:0; right:0; top:50%; height:0; background:linear-gradient(180deg, #ff3fa4, #3ad6ff); }
+  #meter::after { content:""; position:absolute; left:0; right:0; top:50%; height:1px; background:var(--dim); }
+  .mlbl { writing-mode:vertical-rl; transform:rotate(180deg); font:700 10px system-ui; letter-spacing:2px; color:var(--dim); }
+  .hitflash { animation:hit .35s; } @keyframes hit { from { box-shadow:inset 0 0 0 200px rgba(255,207,58,.5); } }
+  .wkflash { animation:wk .8s; } @keyframes wk { from { box-shadow:inset 0 0 0 200px rgba(242,85,90,.5); } }
+
+  .btns { grid-area:btns; display:flex; flex-direction:column; gap:10px; }
+  .btns .row { display:flex; gap:10px; }
+  button { flex:1; border:0; border-radius:14px; padding:16px 10px; font:800 15px system-ui; letter-spacing:2px; text-transform:uppercase; color:#fff; background:linear-gradient(180deg, var(--acc), var(--acc2)); }
+  button.big { padding:22px 10px; font-size:19px; }
+  button.secondary { background:var(--card); border:1px solid var(--line); font-size:12px; }
+  button:active { filter:brightness(1.2); }
+
+  #setup { position:fixed; inset:0; z-index:5; background:rgba(4,14,8,.96); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; padding:24px; text-align:center; }
+  #setup[hidden] { display:none; }
+  #setup p { color:var(--dim); max-width:340px; }
+  #setup button { flex:none; width:min(320px, 100%); }
+  #msg { color:var(--warn); font-size:13px; min-height:1.2em; }
+
+  #sheet { position:fixed; inset:0; z-index:6; background:rgba(0,0,0,.6); display:flex; align-items:flex-end; }
+  #sheet[hidden] { display:none; }
+  .sheet-inner { width:100%; background:var(--bg); border-top:1px solid var(--line); border-radius:18px 18px 0 0; padding:18px 18px max(18px, env(safe-area-inset-bottom)); display:flex; flex-direction:column; gap:14px; max-height:90vh; overflow:auto; }
+  .opt { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+  .opt input[type=range] { flex:1; accent-color:var(--acc); }
+  .opt input[type=checkbox] { width:22px; height:22px; accent-color:var(--acc); }
+  .gear { flex:none; width:40px; height:40px; padding:0; border-radius:50%; font:20px system-ui; background:var(--card); border:1px solid var(--line); }
+</style>
+</head>
+<body>
+  <header>
+    <h1>BOWL<span>PAD</span></h1>
+    <div class="pill">
+      <span><i id="dSrv" class="dot"></i>Link</span>
+      <span><i id="dGame" class="dot"></i>Game</span>
+      <span><i id="dGyro" class="dot"></i>Tilt</span>
+    </div>
+    <button id="btnGear" class="gear" aria-label="Settings">⚙</button>
+  </header>
+
+  <div class="score">
+    <div><b id="vScore">0</b><span>Score</span></div>
+    <div><b id="vBalls">1</b><span>Frame</span></div>
+    <div><b id="vPace">Hook</b><span>Spin</span></div>
+    <div id="last">Press Start, then swing</div>
+  </div>
+
+  <div class="pad">
+    <div id="ring"><div id="ball"></div></div>
+    <div id="meter" title="Swing"><div id="meterFill"></div></div>
+    <span class="mlbl">SWING</span>
+  </div>
+
+  <div class="btns">
+    <div class="row">
+      <button id="btnPrimary" class="big">Start</button>
+    </div>
+    <div class="row">
+      <button id="btnPace" class="secondary">Spin</button>
+      <button id="btnCenter" class="secondary">Recenter</button>
+      <button id="btnMenu" class="secondary">Menu</button>
+    </div>
+  </div>
+
+  <div id="setup">
+    <h1 style="font-size:24px">BOWL<span>PAD</span></h1>
+    <p>Your phone is the ball. Hold it at your side, screen up. Tilt it left or right to step along the foul line. Swing it back, then forward, and the ball goes: the quicker the swing, the faster it rolls.</p>
+    <button id="btnEnable" class="big">Enable motion</button>
+    <div id="msg"></div>
+  </div>
+
+  <div id="sheet" hidden>
+    <div class="sheet-inner">
+      <div class="opt"><b>SETTINGS</b><button id="btnClose" class="gear" aria-label="Close">✕</button></div>
+      <label class="opt"><span>Swing range</span><input id="sens" type="range" min="15" max="80" step="1" /><span id="sensV" style="width:36px;text-align:right"></span></label>
+      <label class="opt"><span>Reverse the swing</span><input id="invert" type="checkbox" /></label>
+      <label class="opt"><span>Vibration</span><input id="haptics" type="checkbox" /></label>
+      <p style="color:var(--dim);font-size:12px">The way you hold the phone when you press Start (or Recenter) is the middle of the lane and the bottom of your swing. A smaller swing range means a smaller swing rolls the ball.</p>
+    </div>
+  </div>
+
+<script type="module">
+const $ = (id) => document.getElementById(id);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const D2R = Math.PI / 180, R2D = 180 / Math.PI;
+
+// ---------- settings ----------
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('bowlpad-' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem('bowlpad-' + k, JSON.stringify(v)); } catch {} },
+};
+const cfg = { sens: store.get('sens', 40), invert: store.get('invert', false), haptics: store.get('haptics', true) };
+$('sens').value = cfg.sens; $('sensV').textContent = cfg.sens + '°';
+$('invert').checked = cfg.invert; $('haptics').checked = cfg.haptics;
+$('sens').oninput = (e) => { cfg.sens = +e.target.value; $('sensV').textContent = cfg.sens + '°'; store.set('sens', cfg.sens); };
+$('invert').onchange = (e) => { cfg.invert = e.target.checked; store.set('invert', cfg.invert); };
+$('haptics').onchange = (e) => { cfg.haptics = e.target.checked; store.set('haptics', cfg.haptics); };
+$('btnGear').onclick = () => { $('sheet').hidden = false; };
+$('btnClose').onclick = () => { $('sheet').hidden = true; };
+$('sheet').onclick = (e) => { if (e.target.id === 'sheet') $('sheet').hidden = true; };
+
+const dot = (id, s) => { $(id).className = 'dot ' + (s || ''); };
+
+// ---------- link ----------
+// The QR code on the game's menu carries ?room=CODE; the relay only links this phone to the game showing that code.
+const room = (new URLSearchParams(location.search).get('room') || '').toUpperCase();
+let ws, games = 0, stopped = false;
+function connect() {
+  if (stopped) return;
+  if (!room) { $('msg').textContent = 'Open this page by scanning the QR code on the Bowling menu.'; return; }
+  ws = new WebSocket(`wss://${location.host}/gyro-ws`);
+  ws.onopen = () => { dot('dSrv', 'ok'); ws.send(JSON.stringify({ type: 'hello', role: 'phone', room })); };
+  ws.onclose = () => { dot('dSrv'); dot('dGame'); games = 0; if (!stopped) setTimeout(connect, 1000); };
+  ws.onmessage = (e) => {
+    let m; try { m = JSON.parse(e.data); } catch { return; }
+    if (m.type === 'joined') { games = m.games; dot('dGame', games ? 'ok' : 'warn'); }
+    else if (m.type === 'error') { stopped = true; $('setup').hidden = false; $('msg').textContent = 'That link has a bad game code. Scan the QR code on the game again.'; }
+    else if (m.type === 'kicked') { stopped = true; $('setup').hidden = false; $('msg').textContent = 'Another phone took over this game. Scan the QR code again to take it back.'; }
+    else if (m.type === 'status') { games = m.games; dot('dGame', games ? 'ok' : 'warn'); }
+    else if (m.type === 'state') applyState(m);
+    else if (m.type === 'haptic') haptic(m.pattern);
+    else if (m.type === 'calibrate') calibrate();
+  };
+}
+const send = (m) => { if (ws && ws.readyState === 1) ws.send(JSON.stringify(m)); };
+
+function applyState(m) {
+  $('vScore').textContent = m.total ?? 0;
+  $('vBalls').textContent = m.frame ?? 1;
+  $('vPace').textContent = m.hook ?? 'Hook';
+  if (m.last) { $('last').textContent = m.last; $('last').className = m.tone || ''; }
+  else if (m.mode === 'setup') { $('last').textContent = 'Press Start, then swing'; $('last').className = ''; }
+  else if (m.mode === 'over') { $('last').textContent = 'Game over'; $('last').className = ''; }
+  else if (m.mode === 'aim') { $('last').textContent = m.bot ? `${m.name} (computer) is bowling` : `${m.name} · lane ${m.lane} · ball ${m.ball}`; $('last').className = ''; }
+  $('btnPrimary').textContent = m.mode === 'setup' ? 'Start' : m.mode === 'over' ? 'Again' : 'Roll';
+}
+
+// ---------- haptics ----------
+// iOS 18+: toggling a hidden <input switch> gives a short system tick. Android: navigator.vibrate.
+const PATTERNS = { tap: [0], double: [0, 120], triple: [0, 110, 110], long: [0, 60, 60, 60, 60, 60, 60, 60] };
+const VIBRATE = { tap: 35, double: [40, 80, 40], triple: [40, 70, 40, 70, 40], long: 450 };
+function tick() {
+  const label = document.createElement('label');
+  label.ariaHidden = 'true';
+  label.style.display = 'none';
+  const input = document.createElement('input');
+  input.type = 'checkbox';
+  input.setAttribute('switch', '');
+  label.appendChild(input);
+  document.head.appendChild(label);
+  label.click();
+  document.head.removeChild(label);
+}
+function haptic(name) {
+  const ring = $('ring');
+  const cls = name === 'long' ? 'wkflash' : name === 'triple' || name === 'double' ? 'hitflash' : '';
+  if (cls) { ring.classList.remove(cls); void ring.offsetWidth; ring.classList.add(cls); }
+  if (!cfg.haptics) return;
+  if (navigator.vibrate) navigator.vibrate(VIBRATE[name] || 35);
+  let t = 0;
+  for (const g of PATTERNS[name] || PATTERNS.tap) { t += g; setTimeout(tick, t); }
+}
+
+// ---------- tilt ----------
+// The same sum as the flying games' controllers: build "world up" in device coordinates from beta/gamma, turn it into
+// the screen's frame, then read roll (along the foul line) and pitch (the swing). Works upright, in portrait or
+// landscape, and never touches alpha (compass), so it does not drift.
+const tilt = { roll: 0, pitch: 0, has: false };
+let neutral = null;
+
+function onOrient(e) {
+  if (e.beta == null || e.gamma == null) return;
+  const b = e.beta * D2R, g = e.gamma * D2R;
+  const ux = -Math.cos(b) * Math.sin(g), uy = Math.sin(b), uz = Math.cos(b) * Math.cos(g);
+  const ang = ((screen.orientation && screen.orientation.angle) ?? window.orientation ?? 0) * D2R;
+  const sx = ux * Math.cos(ang) - uy * Math.sin(ang);
+  const sy = ux * Math.sin(ang) + uy * Math.cos(ang);
+  tilt.roll = Math.asin(clamp(-sx, -1, 1)) * R2D;  // + = right edge down: step to the right
+  tilt.pitch = Math.atan2(uz, sy) * R2D;          // + = top tipped away from you: the forward swing
+  if (!tilt.has) { tilt.has = true; dot('dGyro', 'ok'); }
+  if (!neutral) calibrate();
+}
+
+function calibrate() {
+  if (tilt.has) neutral = { roll: tilt.roll, pitch: tilt.pitch };
+}
+
+const wrap = (d) => ((d + 540) % 360) - 180;
+const dead = (v, dz) => (Math.abs(v) < dz ? 0 : v - Math.sign(v) * dz);
+let out = { x: 0, y: 0 };
+
+function loop() {
+  if (tilt.has && neutral) {
+    const dr = dead(wrap(tilt.roll - neutral.roll), 3);
+    const dp = dead(wrap(tilt.pitch - neutral.pitch), 1.5);
+    out.x = clamp(dr / 35, -1, 1);
+    out.y = clamp(-dp / cfg.sens, -1, 1) * (cfg.invert ? -1 : 1);
+    const r = $('ring').clientWidth / 2 - 26;
+    // the ball slides along the foul line with x; the meter shows the swing (up: back, down: forward)
+    $('ball').style.transform = `translateX(${out.x * r}px)`;
+    const f = $('meterFill');
+    if (out.y >= 0) { f.style.top = (50 - out.y * 50) + '%'; f.style.height = (out.y * 50) + '%'; }
+    else { f.style.top = '50%'; f.style.height = (-out.y * 50) + '%'; }
+  }
+  requestAnimationFrame(loop);
+}
+loop();
+
+// ~60 Hz to the game
+setInterval(() => {
+  if (tilt.has && neutral) send({ type: 'tilt', x: +out.x.toFixed(3), y: +out.y.toFixed(3), b: 0 });
+}, 16);
+
+// ---------- wake lock (keep the screen on while batting) ----------
+let wakeLock = null;
+async function keepAwake() {
+  try { if ('wakeLock' in navigator && !wakeLock) { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => { wakeLock = null; }); } } catch {}
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden) keepAwake(); });
+
+// ---------- buttons ----------
+$('btnPrimary').onclick = () => { send({ type: 'action', action: 'primary' }); haptic('tap'); };
+$('btnCenter').onclick = () => { calibrate(); haptic('tap'); };
+$('btnMenu').onclick = () => { send({ type: 'action', action: 'menu' }); };
+$('btnPace').onclick = () => { send({ type: 'action', action: 'hook' }); };
+
+$('btnEnable').onclick = async () => {
+  if (!window.isSecureContext) { $('msg').textContent = 'Open this page via https:// (motion needs a secure page).'; return; }
+  try {
+    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+      const p = await DeviceOrientationEvent.requestPermission();
+      if (p !== 'granted') throw new Error('motion permission ' + p);
+    }
+    window.addEventListener('deviceorientation', onOrient);
+    dot('dGyro', 'warn');
+    keepAwake();
+    setTimeout(() => {
+      if (!tilt.has) { $('msg').textContent = 'No motion data. On iPhone check Settings › Safari › Motion & Orientation Access.'; dot('dGyro'); }
+      else $('setup').hidden = true;
+    }, 900);
+  } catch (err) {
+    $('msg').textContent = err.message + ' — close this tab and reopen it to be asked again.';
+  }
+};
+
+// Opened on a laptop/desktop? This page is meant for the phone.
+if (!('ontouchstart' in window) && !navigator.maxTouchPoints) {
+  $('msg').textContent = 'This is the phone controller page. Open it on your phone by scanning the QR code on the game screen, and close this tab.';
+}
+
+connect();
+</script>
+</body>
+</html>

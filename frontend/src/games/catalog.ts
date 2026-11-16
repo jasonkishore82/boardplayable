@@ -107,10 +107,10 @@ export const GAMES: Game[] = [
   {
     id: 'bowling',
     name: 'Bowling',
-    description: 'Ten frames, ten pins. Roll strikes and spares for the highest score.',
+    description: 'Four lanes, ten frames. Flick the mouse or swing your phone to roll strikes and spares.',
     category: 'sports',
-    players: { min: 1, max: 6 },
-    status: 'coming-soon',
+    players: { min: 1, max: 4 },
+    status: 'available',
   },
   {
     id: 'cricket',

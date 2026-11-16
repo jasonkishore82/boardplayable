@@ -22,4 +22,5 @@ export const engines: Record<string, () => Promise<EngineModule>> = {
   cricket: () => import('./engines/cricket'),
   'free-flight': () => import('./engines/free-flight'),
   'free-fly': () => import('./engines/free-fly'),
+  bowling: () => import('./engines/bowling'),
 }
