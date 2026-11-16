@@ -9,9 +9,12 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>Board Playable</title>
     <script>
+      // Light is the default; dark only when the player chose it (the theme button remembers it).
+      var theme = 'light'
       try {
-        if (localStorage.getItem('theme') === 'light') document.documentElement.dataset.theme = 'light'
+        if (localStorage.getItem('theme') === 'dark') theme = 'dark'
       } catch (e) {}
+      document.documentElement.dataset.theme = theme
     </script>
   </head>
   <body>

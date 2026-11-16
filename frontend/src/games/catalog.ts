@@ -1,7 +1,7 @@
 // The game library. Every screen that lists games reads from here,
 // so adding a game is one new entry in GAMES.
 
-export type CategoryId = 'strategy' | 'classic'
+export type CategoryId = 'strategy' | 'classic' | 'arcade' | 'casino' | 'sports'
 
 export type Game = {
   /** URL-safe id, also used as the folder name under src/games/engines/. */
@@ -18,6 +18,9 @@ export type Game = {
 export const CATEGORIES: { id: CategoryId; label: string }[] = [
   { id: 'strategy', label: 'Strategy' },
   { id: 'classic', label: 'Classic' },
+  { id: 'arcade', label: 'Arcade' },
+  { id: 'casino', label: 'Casino' },
+  { id: 'sports', label: 'Sports' },
 ]
 
 export const GAMES: Game[] = [
@@ -38,11 +41,19 @@ export const GAMES: Game[] = [
     status: 'available',
   },
   {
-    id: 'cricket',
-    name: 'Cricket',
-    description: 'Hand cricket: pick 1 to 6 each ball. Match the batter to bowl them out.',
-    category: 'classic',
-    players: { min: 2, max: 2 },
+    id: 'free-flight',
+    name: 'Free Flight',
+    description: 'No score, no crashes. Soar over a sunset sea or through deep space.',
+    category: 'arcade',
+    players: { min: 1, max: 1 },
+    status: 'available',
+  },
+  {
+    id: 'free-fly',
+    name: 'Free Fly',
+    description: 'Glide between floating sky islands or weave through an asteroid field. Just fly.',
+    category: 'arcade',
+    players: { min: 1, max: 1 },
     status: 'available',
   },
   {
@@ -77,11 +88,68 @@ export const GAMES: Game[] = [
     players: { min: 2, max: 10 },
     status: 'coming-soon',
   },
+  {
+    id: 'roulette',
+    name: 'Roulette',
+    description: 'Place your chips on a number or colour, spin the wheel and see where the ball lands.',
+    category: 'casino',
+    players: { min: 1, max: 8 },
+    status: 'coming-soon',
+  },
+  {
+    id: 'poker',
+    name: 'Poker',
+    description: "Texas hold'em: bet, bluff and make the best five-card hand.",
+    category: 'casino',
+    players: { min: 2, max: 8 },
+    status: 'coming-soon',
+  },
+  {
+    id: 'bowling',
+    name: 'Bowling',
+    description: 'Ten frames, ten pins. Roll strikes and spares for the highest score.',
+    category: 'sports',
+    players: { min: 1, max: 6 },
+    status: 'coming-soon',
+  },
+  {
+    id: 'cricket',
+    name: 'Cricket',
+    description: 'Bat, bowl and field. Score more runs than the other side before the overs run out.',
+    category: 'sports',
+    players: { min: 2, max: 2 },
+    status: 'available',
+  },
+  {
+    id: 'badminton',
+    name: 'Badminton',
+    description: 'Smash, drop and clear. Keep the shuttle in the air and first to 21 wins.',
+    category: 'sports',
+    players: { min: 2, max: 4 },
+    status: 'coming-soon',
+  },
+  {
+    id: 'tennis',
+    name: 'Tennis',
+    description: 'Serve, rally and break. Win the points, the games and the set.',
+    category: 'sports',
+    players: { min: 2, max: 4 },
+    status: 'coming-soon',
+  },
+  {
+    id: 'table-tennis',
+    name: 'Table tennis',
+    description: 'Fast rallies across a small table. First to 11 points takes the game.',
+    category: 'sports',
+    players: { min: 2, max: 4 },
+    status: 'coming-soon',
+  },
 ]
 
 export function formatPlayers(players: Game['players']): string {
   if (!players) return 'Varies by game'
   const { min, max } = players
+  if (max === 1) return 'Single player'
   if (min === max) return `${max} players`
   return `Up to ${max} players`
 }

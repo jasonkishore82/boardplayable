@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="theme-color" content="#0b1020" />
+<title>Free Flight Controller</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet" />
+<style>
+  :root { --bg:#0b1020; --card:#131b30; --line:#26314d; --text:#eef2f8; --dim:#93a0b8; --ok:#3ecf8e; --warn:#f5a524; --bad:#f2555a; --acc:#ff7a45; --acc2:#ffb36b; }
+  * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  html, body { height:100%; background:var(--bg); color:var(--text); font:15px/1.4 -apple-system, system-ui, sans-serif; overflow:hidden; touch-action:manipulation; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; }
+  body {
+    padding: max(14px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(14px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+    display:grid; gap:12px;
+    grid-template-rows:auto auto 1fr auto;
+    grid-template-areas: "top" "score" "pad" "btns";
+  }
+  @media (orientation: landscape) {
+    body { grid-template-columns:1fr 1fr; grid-template-rows:auto 1fr auto; grid-template-areas: "top top" "pad score" "pad btns"; }
+  }
+  header { grid-area:top; display:flex; justify-content:space-between; align-items:center; gap:10px; }
+  h1 { font:900 17px 'Orbitron', system-ui; letter-spacing:2px; }
+  h1 span { color:var(--acc); }
+  .pill { display:flex; gap:12px; background:var(--card); border:1px solid var(--line); border-radius:999px; padding:7px 13px; font-size:12px; color:var(--dim); }
+  .pill span { display:flex; align-items:center; }
+  .dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; background:var(--bad); }
+  .dot.ok { background:var(--ok); } .dot.warn { background:var(--warn); }
+
+  .score { grid-area:score; display:flex; justify-content:space-around; background:var(--card); border:1px solid var(--line); border-radius:14px; padding:10px; text-align:center; align-self:start; gap:6px; }
+  .score b { display:block; font:700 18px 'Orbitron', system-ui; font-variant-numeric:tabular-nums; }
+  .score span { color:var(--dim); font-size:10px; letter-spacing:1px; text-transform:uppercase; }
+  #vWorld { font-size:12px; letter-spacing:1px; }
+
+  .pad { grid-area:pad; display:flex; align-items:center; justify-content:center; min-height:0; gap:16px; }
+  #ring { position:relative; width:min(62vw, 42vh, 300px); aspect-ratio:1; border-radius:50%; border:2px solid var(--line); background:radial-gradient(circle, #18223c 0 58%, #0f1628 59%); }
+  @media (orientation: landscape) { #ring { width:min(40vw, 60vh, 300px); } }
+  #ring::before, #ring::after { content:""; position:absolute; background:var(--line); }
+  #ring::before { left:50%; top:0; bottom:0; width:1px; } #ring::after { top:50%; left:0; right:0; height:1px; }
+  #ship { position:absolute; left:50%; top:50%; width:58px; height:58px; margin:-29px 0 0 -29px; }
+  #ship svg { width:100%; height:100%; filter:drop-shadow(0 0 10px rgba(255,140,80,.55)); }
+  #alt { position:relative; width:14px; height:min(62vw, 42vh, 300px); border:1px solid var(--line); border-radius:8px; background:#0f1628; overflow:hidden; flex:none; }
+  @media (orientation: landscape) { #alt { height:min(40vw, 60vh, 300px); } }
+  #altFill { position:absolute; left:0; right:0; bottom:0; height:0; background:linear-gradient(0deg, #2d6fb3, #8fd0ff); transition:height .1s linear; }
+  .altlbl { writing-mode:vertical-rl; transform:rotate(180deg); font:700 10px 'Orbitron', system-ui; letter-spacing:2px; color:var(--dim); }
+  .flash { animation:flash .5s; } @keyframes flash { from { background:radial-gradient(circle, #3b4f86 0 58%, #0f1628 59%); } }
+
+  .btns { grid-area:btns; display:flex; flex-direction:column; gap:10px; }
+  .btns .row { display:flex; gap:10px; }
+  button { flex:1; border:0; border-radius:14px; padding:15px 8px; font:700 14px 'Orbitron', system-ui; letter-spacing:2px; text-transform:uppercase; color:#fff; background:linear-gradient(180deg, var(--acc2), var(--acc)); }
+  button.big { padding:20px 10px; font-size:18px; }
+  button.hold { padding:22px 8px; font-size:15px; background:#1a2440; border:1px solid var(--line); }
+  button.hold.on { background:linear-gradient(180deg, #8fd0ff, #2d6fb3); border-color:transparent; }
+  #btnBoost.on { background:linear-gradient(180deg, var(--acc2), var(--acc)); }
+  button.secondary { background:#161f37; border:1px solid var(--line); font-size:11px; letter-spacing:1px; padding:13px 4px; }
+  button:disabled { opacity:.45; }
+  button:active { filter:brightness(1.2); }
+
+  #setup { position:fixed; inset:0; z-index:5; background:rgba(8,12,24,.97); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; padding:24px; text-align:center; }
+  #setup[hidden] { display:none; }
+  #setup p { color:var(--dim); max-width:340px; }
+  #setup button { flex:none; width:min(320px, 100%); }
+  #msg { color:var(--warn); font-size:13px; min-height:1.2em; }
+
+  #sheet { position:fixed; inset:0; z-index:6; background:rgba(0,0,0,.6); display:flex; align-items:flex-end; }
+  #sheet[hidden] { display:none; }
+  .sheet-inner { width:100%; background:var(--bg); border-top:1px solid var(--line); border-radius:18px 18px 0 0; padding:18px 18px max(18px, env(safe-area-inset-bottom)); display:flex; flex-direction:column; gap:14px; max-height:90vh; overflow:auto; }
+  .opt { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+  .opt input[type=range] { flex:1; accent-color:var(--acc); }
+  .opt input[type=checkbox] { width:22px; height:22px; accent-color:var(--acc); }
+  .hdr-right { display:flex; align-items:center; gap:8px; }
+  #btnExit { flex:none; padding:10px 12px; border-radius:999px; font-size:11px; letter-spacing:1px; background:#2a1620; border:1px solid #5a2a35; color:#ffb3b8; }
+  #roomTag { font:700 11px 'Orbitron', system-ui; letter-spacing:2px; color:var(--dim); }
+  #code { width:min(320px, 100%); padding:14px; border-radius:14px; border:1px solid var(--line); background:var(--card); color:var(--text); text-align:center; font:900 30px 'Orbitron', system-ui; letter-spacing:12px; text-transform:uppercase; outline:none; }
+  #code:focus { border-color:var(--acc); }
+  .step { display:flex; flex-direction:column; align-items:center; gap:16px; width:100%; }
+  .step[hidden] { display:none; }
+  .gear { flex:none; width:40px; height:40px; padding:0; border-radius:50%; font:20px system-ui; background:var(--card); border:1px solid var(--line); letter-spacing:0; }
+</style>
+</head>
+<body>
+  <header>
+    <h1>FLIGHT<span>PAD</span> <span id="roomTag"></span></h1>
+    <div class="pill">
+      <span><i id="dSrv" class="dot"></i>Link</span>
+      <span><i id="dGame" class="dot"></i>Game</span>
+      <span><i id="dGyro" class="dot"></i>Tilt</span>
+    </div>
+    <div class="hdr-right">
+      <button id="btnGear" class="gear" aria-label="Settings">⚙</button>
+      <button id="btnExit">Exit</button>
+    </div>
+  </header>
+
+  <div class="score">
+    <div><b id="vSpeed">0</b><span>km/h</span></div>
+    <div><b id="vAlt">–</b><span>Alt m</span></div>
+    <div><b id="vWorld">–</b><span id="vState">Menu</span></div>
+  </div>
+
+  <div class="pad">
+    <div id="ring">
+      <div id="ship">
+        <svg viewBox="0 0 64 64" aria-hidden="true">
+          <path d="M32 4 L37 26 L60 40 L60 45 L37 38 L35 52 L41 58 L23 58 L29 52 L27 38 L4 45 L4 40 L27 26 Z" fill="#eef2f6" stroke="#ff7a45" stroke-width="2" stroke-linejoin="round"/>
+          <circle cx="32" cy="18" r="3" fill="#5fd4ff"/>
+        </svg>
+      </div>
+    </div>
+    <div id="alt" title="Altitude"><div id="altFill"></div></div>
+    <span class="altlbl">ALTITUDE</span>
+  </div>
+
+  <div class="btns">
+    <div class="row">
+      <button id="btnBrake" class="hold">Brake</button>
+      <button id="btnBoost" class="hold">Boost</button>
+    </div>
+    <button id="btnPrimary" class="big">Take off</button>
+    <div class="row">
+      <button id="btnScene" class="secondary">Scene</button>
+      <button id="btnView" class="secondary">Camera</button>
+      <button id="btnCenter" class="secondary">Recenter</button>
+      <button id="btnMenu" class="secondary">Menu</button>
+    </div>
+  </div>
+
+  <div id="setup">
+    <h1 style="font-size:24px">FLIGHT<span>PAD</span></h1>
+    <div id="stepJoin" class="step">
+      <p>Type the 4-letter code shown on the game screen you want to fly.</p>
+      <input id="code" maxlength="4" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" inputmode="text" placeholder="····" aria-label="Game code" />
+      <button id="btnJoin" class="big">Join game</button>
+    </div>
+    <div id="stepMotion" class="step" hidden>
+      <p>Your phone is the flight stick. Hold it comfortably, tilt left/right to turn and tip forward/back to dive/climb. Hold <b>Boost</b> to go fast.</p>
+      <button id="btnEnable" class="big">Enable motion</button>
+    </div>
+    <div id="msg"></div>
+  </div>
+
+  <div id="sheet" hidden>
+    <div class="sheet-inner">
+      <div class="opt"><b style="font-family:Orbitron">SETTINGS</b><button id="btnClose" class="gear" aria-label="Close">✕</button></div>
+      <label class="opt"><span>Sensitivity</span><input id="sens" type="range" min="10" max="45" step="1" /><span id="sensV" style="width:36px;text-align:right"></span></label>
+      <label class="opt"><span>Invert climb / dive (pilot style)</span><input id="invert" type="checkbox" /></label>
+      <label class="opt"><span>Vibration</span><input id="haptics" type="checkbox" /></label>
+      <p style="color:var(--dim);font-size:12px">Tilt re-centres when you take off, using however you're holding the phone at that moment. Tap Recenter any time.</p>
+    </div>
+  </div>
+
+<script type="module">
+const $ = (id) => document.getElementById(id);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const D2R = Math.PI / 180, R2D = 180 / Math.PI;
+
+// ---------- settings ----------
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('flightpad-' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem('flightpad-' + k, JSON.stringify(v)); } catch {} },
+};
+const cfg = { sens: store.get('sens', 26), invert: store.get('invert', false), haptics: store.get('haptics', true) };
+$('sens').value = cfg.sens; $('sensV').textContent = cfg.sens + '°';
+$('invert').checked = cfg.invert; $('haptics').checked = cfg.haptics;
+$('sens').oninput = (e) => { cfg.sens = +e.target.value; $('sensV').textContent = cfg.sens + '°'; store.set('sens', cfg.sens); };
+$('invert').onchange = (e) => { cfg.invert = e.target.checked; store.set('invert', cfg.invert); };
+$('haptics').onchange = (e) => { cfg.haptics = e.target.checked; store.set('haptics', cfg.haptics); };
+$('btnGear').onclick = () => { $('sheet').hidden = false; };
+$('btnClose').onclick = () => { $('sheet').hidden = true; };
+$('sheet').onclick = (e) => { if (e.target.id === 'sheet') $('sheet').hidden = true; };
+
+const dot = (id, s) => { $(id).className = 'dot ' + (s || ''); };
+
+// ---------- link ----------
+// Each game screen has its own code; this phone only talks to that one game.
+const CODE_RE = /^[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{4}$/;
+let ws = null;
+let room = null;
+let checking = false; // a typed code: make sure that game exists before going on
+let motionOn = false;
+let retry;
+
+function showJoin(message) {
+  $('setup').hidden = false;
+  $('stepJoin').hidden = false;
+  $('stepMotion').hidden = true;
+  $('msg').textContent = message || '';
+  $('code').value = '';
+}
+function showMotion() {
+  $('stepJoin').hidden = true;
+  if (motionOn) { $('setup').hidden = true; $('msg').textContent = ''; return; }
+  $('setup').hidden = false;
+  $('stepMotion').hidden = false;
+  $('msg').textContent = '';
+}
+
+function connect() {
+  if (!room) return;
+  const sock = new WebSocket(`wss://${location.host}/gyro-ws`);
+  ws = sock;
+  sock.onopen = () => { dot('dSrv', 'ok'); sock.send(JSON.stringify({ type: 'hello', role: 'phone', room })); };
+  sock.onclose = () => {
+    if (ws !== sock) return; // replaced by leave() or a newer socket
+    dot('dSrv'); dot('dGame');
+    retry = setTimeout(connect, 1000);
+  };
+  sock.onmessage = (e) => {
+    let m; try { m = JSON.parse(e.data); } catch { return; }
+    if (m.type === 'joined') {
+      if (checking && !m.games) { leave(); showJoin(`No game is showing code ${m.room}. Check the code and try again.`); return; }
+      checking = false;
+      $('roomTag').textContent = m.room;
+      history.replaceState(null, '', `?room=${m.room}`);
+      showMotion();
+    }
+    else if (m.type === 'error') { leave(); showJoin('That code isn\'t valid. Codes are 4 letters/numbers.'); }
+    else if (m.type === 'kicked') { leave(); showJoin('Another phone took over this game.'); }
+    else if (m.type === 'status') dot('dGame', m.games ? 'ok' : 'warn');
+    else if (m.type === 'state') applyState(m);
+    else if (m.type === 'haptic') haptic(m.pattern);
+    else if (m.type === 'calibrate') calibrate();
+  };
+}
+const send = (m) => { if (ws && ws.readyState === 1) ws.send(JSON.stringify(m)); };
+
+function join(code) {
+  code = String(code || '').trim().toUpperCase();
+  if (!CODE_RE.test(code)) { $('msg').textContent = 'Codes are 4 letters/numbers, e.g. K7QM.'; return; }
+  leave();
+  room = code;
+  checking = true;
+  $('msg').textContent = 'Connecting…';
+  connect();
+}
+
+// Disconnect from the current game and stop reconnecting.
+function leave() {
+  clearTimeout(retry);
+  releaseHolds();
+  const sock = ws;
+  ws = null;
+  room = null;
+  checking = false;
+  if (sock) { sock.onclose = null; sock.close(); }
+  dot('dSrv'); dot('dGame');
+  $('roomTag').textContent = '';
+  history.replaceState(null, '', location.pathname);
+}
+
+function applyState(m) {
+  $('vSpeed').textContent = m.speed ?? 0;
+  $('vAlt').textContent = m.altitude ?? '∞';
+  $('vWorld').textContent = (m.world || '–').replace(/^(Sunset|Deep) /, '');
+  $('vState').textContent = m.mode === 'menu' ? 'Menu' : m.paused ? 'Paused' : 'Flying';
+  $('altFill').style.height = (clamp(m.altNorm ?? 0.5, 0, 1) * 100).toFixed(1) + '%';
+  $('btnPrimary').textContent = m.mode === 'menu' ? 'Take off' : m.paused ? 'Resume' : 'Pause';
+}
+
+// ---------- haptics ----------
+const PATTERNS = { tap: [0], double: [0, 120] };
+const VIBRATE = { tap: 30, double: [40, 80, 40] };
+function tick() {
+  const label = document.createElement('label');
+  label.ariaHidden = 'true'; label.style.display = 'none';
+  const input = document.createElement('input');
+  input.type = 'checkbox'; input.setAttribute('switch', '');
+  label.appendChild(input); document.head.appendChild(label);
+  label.click(); document.head.removeChild(label);
+}
+function haptic(name) {
+  const ring = $('ring');
+  ring.classList.remove('flash'); void ring.offsetWidth; ring.classList.add('flash');
+  if (!cfg.haptics) return;
+  if (navigator.vibrate) navigator.vibrate(VIBRATE[name] || 30);
+  let t = 0;
+  for (const g of PATTERNS[name] || PATTERNS.tap) { t += g; setTimeout(tick, t); }
+}
+
+// ---------- tilt ----------
+// World "up" in device coords from beta/gamma, rotated into the screen frame:
+// works in portrait or landscape and ignores compass (alpha) drift.
+const tilt = { roll: 0, pitch: 0, has: false };
+let neutral = null;
+function onOrient(e) {
+  if (e.beta == null || e.gamma == null) return;
+  const b = e.beta * D2R, g = e.gamma * D2R;
+  const ux = -Math.cos(b) * Math.sin(g), uy = Math.sin(b), uz = Math.cos(b) * Math.cos(g);
+  const ang = ((screen.orientation && screen.orientation.angle) ?? window.orientation ?? 0) * D2R;
+  const sx = ux * Math.cos(ang) - uy * Math.sin(ang);
+  const sy = ux * Math.sin(ang) + uy * Math.cos(ang);
+  tilt.roll = Math.asin(clamp(-sx, -1, 1)) * R2D;
+  tilt.pitch = Math.atan2(uz, sy) * R2D;
+  if (!tilt.has) { tilt.has = true; dot('dGyro', 'ok'); }
+  if (!neutral) calibrate();
+}
+function calibrate() { if (tilt.has) neutral = { roll: tilt.roll, pitch: tilt.pitch }; }
+
+const wrap = (d) => ((d + 540) % 360) - 180;
+const dead = (v, dz) => (Math.abs(v) < dz ? 0 : v - Math.sign(v) * dz);
+const out = { x: 0, y: 0 };
+function loop() {
+  if (tilt.has && neutral) {
+    const dr = dead(wrap(tilt.roll - neutral.roll), 2);
+    const dp = dead(wrap(tilt.pitch - neutral.pitch), 2);
+    out.x = clamp(dr / cfg.sens, -1, 1);
+    out.y = clamp(-dp / cfg.sens, -1, 1) * (cfg.invert ? -1 : 1);
+    const r = $('ring').clientWidth / 2 - 30;
+    $('ship').style.transform = `translate(${out.x * r}px, ${-out.y * r}px) rotate(${out.x * 35}deg)`;
+  }
+  requestAnimationFrame(loop);
+}
+loop();
+setInterval(() => { if (tilt.has && neutral) send({ type: 'tilt', x: +out.x.toFixed(3), y: +out.y.toFixed(3) }); }, 16);
+
+// ---------- wake lock ----------
+let wakeLock = null;
+async function keepAwake() {
+  try { if ('wakeLock' in navigator && !wakeLock) { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => { wakeLock = null; }); } } catch {}
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden) keepAwake(); });
+
+// ---------- buttons ----------
+const holdOffs = [];
+function releaseHolds() { for (const off of holdOffs) off(); }
+function holdButton(el, name) {
+  let down = false;
+  const on = (e) => { e.preventDefault(); if (down) return; down = true; el.classList.add('on'); send({ type: 'action', action: name + '-on' }); };
+  const off = () => { if (!down) return; down = false; el.classList.remove('on'); send({ type: 'action', action: name + '-off' }); };
+  holdOffs.push(off);
+  el.addEventListener('pointerdown', on);
+  for (const t of ['pointerup', 'pointercancel', 'pointerleave']) el.addEventListener(t, off);
+  el.addEventListener('contextmenu', (e) => e.preventDefault());
+  // keep a held button alive (the game drops it if tilt stops arriving)
+  setInterval(() => { if (down) send({ type: 'action', action: name + '-on' }); }, 400);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) off(); });
+}
+holdButton($('btnBoost'), 'boost');
+holdButton($('btnBrake'), 'brake');
+
+$('btnPrimary').onclick = () => { send({ type: 'action', action: 'primary' }); haptic('tap'); };
+$('btnScene').onclick = () => { send({ type: 'action', action: 'scene' }); };
+$('btnView').onclick = () => { send({ type: 'action', action: 'view' }); haptic('tap'); };
+$('btnCenter').onclick = () => { calibrate(); haptic('tap'); };
+$('btnMenu').onclick = () => { send({ type: 'action', action: 'menu' }); };
+$('btnExit').onclick = () => { $('sheet').hidden = true; leave(); showJoin('You left the game. Enter a code to join one again.'); };
+$('btnJoin').onclick = () => join($('code').value);
+$('code').addEventListener('input', (e) => {
+  e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
+});
+$('code').addEventListener('keydown', (e) => { if (e.key === 'Enter') join(e.target.value); });
+
+$('btnEnable').onclick = async () => {
+  if (!window.isSecureContext) { $('msg').textContent = 'Open this page via https:// (motion needs a secure page).'; return; }
+  try {
+    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+      const p = await DeviceOrientationEvent.requestPermission();
+      if (p !== 'granted') throw new Error('motion permission ' + p);
+    }
+    window.addEventListener('deviceorientation', onOrient);
+    dot('dGyro', 'warn');
+    keepAwake();
+    setTimeout(() => {
+      if (!tilt.has) { $('msg').textContent = 'No motion data. On iPhone check Settings › Safari › Motion & Orientation Access.'; dot('dGyro'); }
+      else { motionOn = true; $('setup').hidden = true; $('msg').textContent = ''; }
+    }, 900);
+  } catch (err) {
+    $('msg').textContent = err.message + ' — close this tab and reopen it to be asked again.';
+  }
+};
+
+// Scanned QR codes carry ?room=CODE; otherwise ask for the code.
+const fromUrl = (new URLSearchParams(location.search).get('room') || '').toUpperCase();
+if (CODE_RE.test(fromUrl)) {
+  room = fromUrl;
+  $('roomTag').textContent = fromUrl;
+  showMotion();
+  connect();
+} else {
+  showJoin();
+}
+
+if (!('ontouchstart' in window) && !navigator.maxTouchPoints) {
+  $('msg').textContent = 'This is the phone controller page. Open it on your phone by scanning the QR code on the game screen.';
+}
+</script>
+</body>
+</html>

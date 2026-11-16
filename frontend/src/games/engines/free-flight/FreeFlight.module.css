@@ -1,0 +1,330 @@
+/* Free Flight fills the whole window, over the app's top bar, with its own dark colours whatever the theme. */
+.app {
+  --ff-text: #f4f7fb;
+  --ff-dim: #b9c4d3;
+  --ff-panel: rgb(12 18 32 / 0.62);
+  --ff-line: rgb(255 255 255 / 0.16);
+  --ff-accent: #ff7a45;
+  --ff-accent2: #ffb36b;
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: #0b1020;
+  color: var(--ff-text);
+  font: 15px/1.4 var(--font-sans);
+  user-select: none;
+}
+
+.stage {
+  position: absolute;
+  inset: 0;
+  touch-action: none;
+}
+
+.stage canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, transparent 55%, rgb(0 0 0 / 0.45) 100%);
+}
+
+/* ---------- HUD ---------- */
+.hud {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  display: flex;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.gauge {
+  display: grid;
+  grid-template-columns: auto auto;
+  column-gap: 6px;
+  min-width: 96px;
+  padding: 8px 12px;
+  background: var(--ff-panel);
+  border: 1px solid var(--ff-line);
+  border-radius: 12px;
+  backdrop-filter: blur(6px);
+}
+
+.gauge span {
+  grid-column: 1 / 3;
+  color: var(--ff-dim);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+
+.gauge b {
+  font-size: 22px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.gauge small {
+  align-self: end;
+  padding-bottom: 4px;
+  color: var(--ff-dim);
+  font-size: 11px;
+}
+
+.topbar {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.chip {
+  padding: 5px 11px;
+  background: var(--ff-panel);
+  border: 1px solid var(--ff-line);
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+.boost {
+  background: linear-gradient(90deg, var(--ff-accent), var(--ff-accent2));
+  border-color: transparent;
+  color: #fff;
+}
+
+.pauseBtn {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  width: 44px;
+  height: 44px;
+  background: var(--ff-panel);
+  border: 1px solid var(--ff-line);
+  border-radius: 50%;
+  color: var(--ff-text);
+  font-size: 15px;
+  cursor: pointer;
+}
+
+/* Fullscreen toggle: left of the pause button while flying, top right on the menu. */
+.fsBtn {
+  position: absolute;
+  top: 14px;
+  right: 70px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  background: var(--ff-panel);
+  border: 1px solid var(--ff-line);
+  border-radius: 50%;
+  color: var(--ff-text);
+  cursor: pointer;
+}
+
+.fsBtn.fsMenu {
+  right: 16px;
+}
+
+.fsBtn:hover {
+  border-color: var(--ff-accent);
+}
+
+/* ---------- Menu and pause ---------- */
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  overflow: auto;
+  background: rgb(5 8 18 / 0.35);
+}
+
+.menu {
+  justify-content: flex-start;
+  padding-left: max(16px, 6vw);
+  background: linear-gradient(90deg, rgb(5 8 18 / 0.65), rgb(5 8 18 / 0.05) 60%);
+}
+
+.leave {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: var(--ff-panel);
+  border: 1px solid var(--ff-line);
+  border-radius: 999px;
+  color: var(--ff-text);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.leave:hover {
+  border-color: var(--ff-accent);
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: min(420px, 100%);
+  padding: 26px 24px;
+  background: var(--ff-panel);
+  border: 1px solid var(--ff-line);
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+  text-align: center;
+}
+
+.h1 {
+  margin: 0;
+  font-size: 40px;
+  font-weight: 900;
+  letter-spacing: 3px;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.h1 span {
+  display: block;
+  margin-top: 6px;
+  color: var(--ff-accent);
+  font-size: 30px;
+  letter-spacing: 9px;
+}
+
+.h2 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+
+.tag {
+  margin: 0;
+  color: var(--ff-dim);
+}
+
+.btn {
+  padding: 14px;
+  background: linear-gradient(180deg, var(--ff-accent2), var(--ff-accent));
+  border: 0;
+  border-radius: 14px;
+  color: #fff;
+  font: 700 15px var(--font-sans);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.btn:hover {
+  filter: brightness(1.08);
+}
+
+.ghost {
+  background: transparent;
+  border: 1px solid var(--ff-line);
+}
+
+.worlds {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.worldBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  background: rgb(255 255 255 / 0.04);
+  border: 1px solid var(--ff-line);
+  border-radius: 12px;
+  color: var(--ff-text);
+  font: 600 13px var(--font-sans);
+  cursor: pointer;
+}
+
+.worldBtn[aria-pressed='true'] {
+  background: rgb(255 122 69 / 0.14);
+  border-color: var(--ff-accent);
+}
+
+.swatch {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+}
+
+.swatch[data-world='sky'] {
+  background: linear-gradient(180deg, #5d87c9, #f2b48c 70%, #1b4a72 72%);
+}
+
+.swatch[data-world='space'] {
+  background:
+    radial-gradient(circle at 70% 30%, #ffd59a 0 12%, transparent 13%),
+    radial-gradient(circle at 30% 70%, #6b2f8a, #05060f 70%);
+}
+
+.help {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--ff-dim);
+  font-size: 12px;
+}
+
+.help kbd {
+  display: inline-block;
+  min-width: 20px;
+  margin: 0 1px;
+  padding: 1px 5px;
+  background: rgb(255 255 255 / 0.06);
+  border: 1px solid var(--ff-line);
+  border-radius: 5px;
+  color: var(--ff-text);
+  font: 11px ui-monospace, monospace;
+}
+
+@media (max-width: 640px) {
+  .menu {
+    justify-content: center;
+    padding-top: 64px;
+    padding-left: 16px;
+    background: rgb(5 8 18 / 0.45);
+  }
+
+  .gauge {
+    min-width: 78px;
+    padding: 6px 9px;
+  }
+
+  .gauge b {
+    font-size: 17px;
+  }
+
+  .h1 {
+    font-size: 32px;
+  }
+}

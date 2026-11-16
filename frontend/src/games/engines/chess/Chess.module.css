@@ -18,6 +18,14 @@
     #1b1840;
 }
 
+/* Light mode: a pale veil, so dark text reads over the picture. */
+:global([data-theme='light']) .backdrop {
+  background:
+    linear-gradient(rgb(244 246 251 / 0.72), rgb(244 246 251 / 0.86)),
+    url('/backgrounds/chess-dusk.webp') 30% 50% / cover no-repeat,
+    #eef1f6;
+}
+
 /* When the player has chosen a backdrop in Profile, the app shell already shows it behind every page, so this
    page's own picture is not drawn on top of it. */
 :global([data-app-backdrop]) .backdrop {
@@ -232,7 +240,7 @@
 .movesCard {
   display: flex;
   flex-direction: column;
-  height: var(--panel-height);
+  height: var(--moves-height, var(--panel-height));
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
@@ -530,4 +538,25 @@
 
 .startCard > button {
   min-width: 180px;
+}
+
+/* On a phone the board is small, so the start card is too. */
+@media (max-width: 719px) {
+  .startCard {
+    gap: var(--space-3);
+    padding: var(--space-4);
+  }
+
+  .startNote {
+    font-size: 14px;
+  }
+
+  .startCard > button {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .dockSide {
+    height: 96px;
+  }
 }

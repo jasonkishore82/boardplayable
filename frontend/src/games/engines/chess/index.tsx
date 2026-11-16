@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type ReactNode, type RefObject } from 'react'
 import { Avatar } from '../../../components/Avatar'
 import { Button } from '../../../components/Button'
 import Dock from '../../../components/Dock/Dock'
@@ -28,9 +28,9 @@ type Controls = ReturnType<typeof useControls>
 export default function Chess({ roomId, bot, seat }: GameEngineProps) {
   const controls = useControls()
 
-  // The chess pages sit on a night-city picture, so they always use the dark colours, in light mode too.
+  // The chess pages sit on a night-city picture under a veil that follows the theme (see .backdrop in Chess.module.css).
   const page = (content: ReactNode) => (
-    <div className={styles.stage} data-theme="dark">
+    <div className={styles.stage}>
       <div className={styles.backdrop} aria-hidden="true" />
       {content}
     </div>
@@ -77,6 +77,8 @@ function Play({ game, myId, send, controls }: TableContext<ChessState> & { contr
   const sidesLocked = (game.history ?? []).length > 0 || !!game.winner
   // The board is blurred under a "Start game" button until a player presses it.
   const waiting = game.live === false
+  const boardRef = useRef<HTMLDivElement>(null)
+  useBoardFit(boardRef)
 
   function pick(square: string) {
     if (targets.includes(square) && selected) {
@@ -104,7 +106,7 @@ function Play({ game, myId, send, controls }: TableContext<ChessState> & { contr
         />
       )}
       <PlayerStrip color={flipped ? 'white' : 'black'} game={game} myId={myId} />
-      <div className={styles.boardWrap} data-waiting={waiting ? '' : undefined}>
+      <div className={styles.boardWrap} data-waiting={waiting ? '' : undefined} ref={boardRef}>
         <BoardSlot>
           <Board
             game={game}
@@ -132,6 +134,38 @@ function Play({ game, myId, send, controls }: TableContext<ChessState> & { contr
       </div>
     </div>
   )
+}
+
+// Under the board: the player strip (a 36px picture and an 8px gap) and the page's padding, plus a little air.
+const BELOW_BOARD = 36 + 8 + 28
+
+/**
+ * Sizes the board to the window: the room from the board's top edge down to the bottom of the window, less what sits
+ * under it. Written to --chess-board on the page root, which the table's CSS uses for the board and the panels beside
+ * it (Room.module.css). Measured, rather than worked out from 100dvh in CSS, so it holds at any zoom and in any frame.
+ */
+function useBoardFit(ref: RefObject<HTMLElement | null>) {
+  useLayoutEffect(() => {
+    const root = document.documentElement
+    let frame = 0
+    const fit = () => {
+      cancelAnimationFrame(frame)
+      frame = requestAnimationFrame(() => {
+        const el = ref.current
+        if (!el) return
+        const top = el.getBoundingClientRect().top + window.scrollY
+        const size = Math.round(Math.min(1000, Math.max(320, window.innerHeight - top - BELOW_BOARD)))
+        root.style.setProperty('--chess-board', `${size}px`)
+      })
+    }
+    fit()
+    window.addEventListener('resize', fit)
+    return () => {
+      cancelAnimationFrame(frame)
+      window.removeEventListener('resize', fit)
+      root.style.removeProperty('--chess-board')
+    }
+  }, [ref])
 }
 
 /** Beside the board: what is going on when there is something to say, and the moves so far. */

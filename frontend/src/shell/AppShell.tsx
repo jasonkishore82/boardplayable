@@ -13,9 +13,11 @@ export function AppShell() {
   // leaving a game, which fades.
   const viewKey = section === 'games' ? location.pathname.split('/').slice(1, 3).join('/') : section
   // The backdrop picture (chosen in Profile) sits behind every page in the app, so a new page gets it without doing
-  // anything. Over a picture the whole app uses the dark colours, so the words stay readable.
+  // anything. It follows the light or dark theme: a dark veil over it in dark mode, a pale one in light mode, so the
+  // words stay readable either way.
   const backdrop = useBackdrop()
-  const picture = backdrop.src
+  // A picture, or the animated aurora: either way something sits behind the pages.
+  const picture = backdrop.src ?? (backdrop.aurora ? 'aurora' : null)
   // The Games home screen shows the most of the picture: it gets a lighter veil. The top bar is see-through over a
   // picture on every page.
   const home = location.pathname.replace(/\/+$/, '') === '/games'
@@ -29,11 +31,17 @@ export function AppShell() {
     lastTab.current = tabIndex
   }
 
+  const [rail, toggleRail] = useSidebarRail()
+  // Inside a game (/games/<id>, its lobby or a room) the sidebar and the phone tab bar step aside, so the game gets
+  // the whole window. Every game screen has its own way back to Games.
+  const inGame = section === 'games' && !!location.pathname.split('/')[2]
+
   return (
     <div
       className={styles.shell}
-      data-theme={picture ? 'dark' : undefined}
       data-app-backdrop={picture ? '' : undefined}
+      data-rail={rail ? '' : undefined}
+      data-game={inGame ? '' : undefined}
     >
       {picture && (
         // Keyed by the picture, so a newly chosen one fades in.
@@ -41,25 +49,51 @@ export function AppShell() {
           key={picture}
           className={styles.backdrop}
           data-home={home ? '' : undefined}
-          style={{ backgroundImage: `url("${picture}")` }}
+          data-aurora={backdrop.aurora ? '' : undefined}
+          style={backdrop.src ? { backgroundImage: `url("${backdrop.src}")` } : undefined}
           aria-hidden="true"
-        />
+        >
+          {/* The aurora: soft bands of the logo's red and purple, each drifting on its own slow loop. */}
+          {backdrop.aurora && (
+            <div className={styles.aurora}>
+              <span />
+              <span />
+              <span />
+              <span />
+            </div>
+          )}
+        </div>
       )}
       <a href="#main" className="skip-link">
         Skip to content
       </a>
 
       <header className={styles.topbar} data-clear={picture ? '' : undefined}>
+        {/* Sidebar only (hidden on phones): fold the sidebar down to icons, or open it out again. */}
+        <button
+          type="button"
+          className={styles.collapse}
+          onClick={toggleRail}
+          aria-label={rail ? 'Expand sidebar' : 'Collapse sidebar'}
+          aria-pressed={rail}
+          title={rail ? 'Expand sidebar' : 'Collapse sidebar'}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
         <div className={styles.topbarInner}>
           <NavLink to="/games" className={styles.brand} aria-label="Board Playable, games">
             <Wordmark />
           </NavLink>
+          {/* On wider screens this header is the left sidebar: logo, the menu down the side, theme at the bottom. */}
           <nav aria-label="Main" className={styles.topnav}>
-            <TabLinks withIcons iconSize={18} slider />
+            <p className={styles.navLabel}>Menu</p>
+            <TabLinks withIcons iconSize={20} />
           </nav>
-          {/* Over a picture the colours are always dark, so there is nothing to switch. The empty span keeps the
-              tabs centred. */}
-          {picture ? <span /> : <ThemeToggle />}
+          <div className={styles.topbarEnd}>
+            <ThemeToggle />
+          </div>
         </div>
       </header>
 
@@ -81,6 +115,41 @@ export function AppShell() {
       </nav>
     </div>
   )
+}
+
+const RAIL_KEY = 'sidebar-collapsed'
+const NARROW = '(max-width: 1099px)'
+
+/** Whether the sidebar is folded to icons. The player's choice is remembered on this device; until they choose,
+ *  it is folded on narrower screens (under 1100px) and open on wider ones. */
+function useSidebarRail(): [boolean, () => void] {
+  const read = (): boolean | null => {
+    try {
+      const v = localStorage.getItem(RAIL_KEY)
+      return v === null ? null : v === '1'
+    } catch {
+      return null
+    }
+  }
+  const [choice, setChoice] = useState<boolean | null>(read)
+  const [narrow, setNarrow] = useState(() => typeof window !== 'undefined' && window.matchMedia(NARROW).matches)
+  useEffect(() => {
+    const mq = window.matchMedia(NARROW)
+    const onChange = () => setNarrow(mq.matches)
+    mq.addEventListener('change', onChange)
+    return () => mq.removeEventListener('change', onChange)
+  }, [])
+  const rail = choice ?? narrow
+  const toggle = () => {
+    const next = !rail
+    setChoice(next)
+    try {
+      localStorage.setItem(RAIL_KEY, next ? '1' : '0')
+    } catch {
+      // still toggles for this visit
+    }
+  }
+  return [rail, toggle]
 }
 
 type TabLinksProps = {

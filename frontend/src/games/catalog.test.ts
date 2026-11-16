@@ -23,5 +23,6 @@ describe('catalog', () => {
     expect(formatPlayers({ min: 2, max: 2 })).toBe('2 players')
     expect(formatPlayers({ min: 2, max: 6 })).toBe('Up to 6 players')
     expect(formatPlayers(null)).toBe('Varies by game')
+    expect(formatPlayers({ min: 1, max: 1 })).toBe('Single player')
   })
 })

@@ -4,7 +4,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import get_settings
-from .local.db import migrate
+from .local.admin import ensure_admin
+from .local.db import migrate, session
 from .routes import bots, health, local, me, otp, rooms, social_local
 
 
@@ -22,6 +23,9 @@ def create_app() -> FastAPI:
         if settings.local_mode:
             for name in migrate(settings.local_db_path):
                 print(f"[local mode] applied {name} to {settings.local_db_path}", flush=True)
+            with session(settings.local_db_path) as conn:
+                if ensure_admin(conn):
+                    print("[local mode] created admin account (admin / admin123)", flush=True)
         yield
 
     app = FastAPI(title="Board Playable API", version="0.1.0", lifespan=lifespan)

@@ -1,18 +1,19 @@
-import { useState } from 'react'
-import { Logo } from './Logo'
+import { Monogram } from './Monogram'
 import styles from './Wordmark.module.css'
 
-// The mark is the matte Board Playable logo.
+// The mark is the BP monogram: a B and a P sharing one stem.
 export function Mark({ size = 24 }: { size?: number }) {
-  return <Logo size={size} className={styles.mark} />
+  return <Monogram size={size} className={styles.mark} />
 }
 
 export function Wordmark() {
-  const [hovered, setHovered] = useState<boolean | undefined>(undefined)
   return (
-    <span className={styles.wordmark} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
-      <Logo size={24} className={styles.mark} rolling={hovered} />
-      <span>Board Playable</span>
+    <span className={styles.wordmark}>
+      <Monogram size={40} className={styles.mark} />
+      {/* "Board" in the B's red and "Playable" in the P's purple, like the monogram. */}
+      <span className={styles.name}>
+        <span className={styles.board}>Board</span> <span className={styles.playable}>Playable</span>
+      </span>
     </span>
   )
 }

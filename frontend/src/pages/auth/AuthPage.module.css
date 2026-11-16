@@ -125,10 +125,33 @@
   text-align: center;
 }
 
-/* "Playable" steps down: it starts at half the height of "Board". */
+/* "Playable" sits on the same line as "Board". */
 .stageDrop {
   display: inline-block;
-  transform: translateY(0.7em);
+}
+
+/* The logo's colours: "Board" in the B's red, "Playable" in the P's purple. The padding (taken back by the margin)
+   gives the script's loops room, so the clipped gradient doesn't cut them off. */
+.stageBoard,
+.stageDrop {
+  padding: 0.1em 0.2em;
+  margin: -0.1em -0.2em;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+.stageBoard {
+  display: inline-block;
+  background-image: linear-gradient(180deg, #ff5a6e, #e3123f);
+}
+
+.stageDrop {
+  background-image: linear-gradient(180deg, #c99bff, #8a4dff);
+}
+
+:global([data-theme='light']) .stageDrop {
+  background-image: linear-gradient(180deg, #b57cff, #7433d6);
 }
 
 /* Depth: a tight contact shadow plus soft shadows that lift the logo off the panel. */
@@ -167,3 +190,4 @@
   font-size: 13px;
   text-align: center;
 }
+

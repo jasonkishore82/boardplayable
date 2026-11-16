@@ -196,7 +196,7 @@ export function BoardSlot({ children }: { children: ReactNode }) {
               : []),
           ]}
           theme="dark"
-          accentColor="#0070d1"
+          accentColor="#7433d6"
           baseItemSize={44}
           magnification={60}
           panelHeight={58}

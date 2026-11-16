@@ -3,28 +3,36 @@
    Other files (including the game boards) use these names, so keep them. */
 :root,
 [data-theme='dark'] {
-  --font-sans: 'Inter Variable', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-sans: 'Poppins', 'Inter Variable', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-display: var(--font-sans);
 
-  --bg: #0a0e1a;
-  --surface: #151b2b;
-  --surface-raised: #1c2336;
-  --surface-sunken: #0d1220;
-  --border: #252d44;
-  --border-strong: #38425f;
+  /* Near-black charcoal, flat (Playline-style dark dashboard). */
+  --bg: #0b0c11;
+  --surface: #15161e;
+  --surface-raised: #1c1e28;
+  --surface-sunken: #0f1016;
+  --border: #262835;
+  --border-strong: #363949;
   --text: #ffffff;
-  --text-muted: #aab3ca;
-  --text-faint: #7b86a3;
+  --text-muted: #a1a3b3;
+  --text-faint: #6c6f80;
 
   /* The accent stays a plain colour so it can be mixed (color-mix) with surfaces. */
-  --accent: #0070d1;
-  --accent-hover: #1a85e6;
-  --accent-bright: #5aaaff; /* for text and thin lines on dark backgrounds */
+  /* The brand: the logo's purple (the P) as the accent, and its red (the B) beside it. --brand-gradient runs from one
+     to the other, for primary buttons and other places that carry the brand. */
+  --accent: #7433d6;
+  --accent-hover: #8a4dff;
+  --accent-bright: #b57cff; /* for text and thin lines on dark backgrounds */
   --accent-text: #ffffff; /* text on a filled accent */
-  --accent-soft: rgb(0 112 209 / 0.2);
+  --accent-soft: rgb(138 77 255 / 0.22);
+  --brand-red: #e3123f;
+  --brand-red-bright: #ff5a6e;
+  --brand-purple: #7433d6;
+  --brand-purple-bright: #b57cff;
+  --brand-gradient: linear-gradient(90deg, #ff5a6e, #e3123f 38%, #8a4dff 72%, #7433d6);
 
   /* Supporting colours for marks, highlights and scores. */
-  --violet: #8b7cf6;
+  --violet: #b57cff;
   --pink: #e8ecf5;
   --cyan: #5aaaff;
   --gold: #f5c542;
@@ -56,11 +64,12 @@
   --bottombar-height: 64px;
 
   /* Page, overlay and depth colours, all in one place so the light theme can swap them. */
-  --glow-a: rgb(0 112 209 / 0.2);
-  --glow-b: rgb(0 112 209 / 0.07);
+  /* No ambient glow: the page is one flat dark colour. */
+  --glow-a: transparent;
+  --glow-b: transparent;
   --glow-c: transparent;
-  --page-top: #0d1527;
-  --page-bottom: #05070e;
+  --page-top: #0b0c11;
+  --page-bottom: #0b0c11;
   --grid-line: transparent;
   --heading-from: #ffffff;
   --heading-to: #ffffff;
@@ -89,13 +98,13 @@
   --text-muted: #4a5470;
   --text-faint: #7380a0;
 
-  --accent: #0070d1;
-  --accent-hover: #005fb3;
-  --accent-bright: #0070d1;
+  --accent: #7433d6;
+  --accent-hover: #5f24b8;
+  --accent-bright: #7433d6;
   --accent-text: #ffffff;
-  --accent-soft: rgb(0 112 209 / 0.12);
+  --accent-soft: rgb(116 51 214 / 0.12);
 
-  --violet: #6d5ce0;
+  --violet: #7433d6;
   --pink: #3a4663;
   --cyan: #0070d1;
   --gold: #b87d00;
@@ -107,7 +116,7 @@
   --shadow-card: 0 2px 12px rgb(30 40 90 / 0.1);
   --glow-accent: 0 0 0 2px #0b1020;
 
-  --glow-a: rgb(0 112 209 / 0.1);
+  --glow-a: rgb(116 51 214 / 0.1);
   --glow-b: transparent;
   --glow-c: transparent;
   --page-top: #f5f7fb;

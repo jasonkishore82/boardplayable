@@ -1,0 +1,83 @@
+/* The QR card on a flying game's menu. Sits inside the game's own dark menu panel, so its colours are fixed. */
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 14px;
+  background: rgb(0 0 0 / 0.25);
+  border: 1px solid rgb(255 255 255 / 0.12);
+  border-radius: 14px;
+  color: #c8d2e0;
+  font-size: 13px;
+  text-align: center;
+}
+
+.title {
+  color: #f4f7fb;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.qr {
+  width: 132px;
+  height: 132px;
+  padding: 6px;
+  background: #fff;
+  border-radius: 10px;
+}
+
+.code {
+  font-size: 12px;
+  color: #b9c4d3;
+}
+
+.code b {
+  margin-left: 4px;
+  color: #fff;
+  font: 700 14px ui-monospace, monospace;
+  letter-spacing: 0.2em;
+}
+
+.url {
+  max-width: 100%;
+  color: #8ccaff;
+  font: 11px ui-monospace, monospace;
+  word-break: break-all;
+  user-select: all;
+}
+
+.hint {
+  color: #9aa6b8;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.warn {
+  color: #f5c46a;
+}
+
+.linked {
+  flex-direction: row;
+  justify-content: center;
+  color: #d8f5e2;
+  text-align: left;
+}
+
+.dot {
+  display: inline-block;
+  flex: none;
+  width: 9px;
+  height: 9px;
+  margin-right: 6px;
+  border-radius: 50%;
+  vertical-align: middle;
+}
+
+.ok {
+  background: #3ecf8e;
+}
+
+.amber {
+  background: #f5a524;
+}

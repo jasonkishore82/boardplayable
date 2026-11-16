@@ -24,12 +24,21 @@
   cursor: not-allowed;
 }
 
+/* The main action: the logo's red running into its purple. On hover the gradient slides toward the purple. */
 .primary {
-  background: var(--accent);
-  color: var(--accent-text);
+  background: var(--brand-gradient);
+  background-size: 140% 100%;
+  background-position: 0% 50%;
+  color: #fff;
+  box-shadow: 0 6px 18px -8px rgb(227 18 63 / 0.55), 0 6px 18px -8px rgb(116 51 214 / 0.55);
+  transition:
+    background-position 400ms var(--ease),
+    filter var(--duration) var(--ease),
+    transform var(--duration) var(--ease);
 }
 .primary:hover:not(:disabled) {
-  background: var(--accent-hover);
+  background-position: 100% 50%;
+  filter: brightness(1.06);
 }
 .primary:disabled:not([aria-busy]) {
   opacity: 0.4;
