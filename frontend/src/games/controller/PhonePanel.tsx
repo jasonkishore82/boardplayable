@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import type { PhoneController } from './usePhoneController'
 import styles from './PhonePanel.module.css'
 
-// The "use your phone as the controller" card on a game's menu (Free Fly, Free Flight, Cricket nets, Bowling): the QR code to scan, the address, the room
+// The "use your phone as the controller" card on a game's menu (Free Fly, Free Flight, Cricket nets, Bowling, Badminton): the QR code to scan, the address, the room
 // code, and whether a phone is linked. Shows nothing when the relay isn't running (see usePhoneController).
 export function PhonePanel({
   ctrl,

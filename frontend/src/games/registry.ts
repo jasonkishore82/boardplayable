@@ -23,4 +23,5 @@ export const engines: Record<string, () => Promise<EngineModule>> = {
   'free-flight': () => import('./engines/free-flight'),
   'free-fly': () => import('./engines/free-fly'),
   bowling: () => import('./engines/bowling'),
+  badminton: () => import('./engines/badminton'),
 }

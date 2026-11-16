@@ -123,10 +123,10 @@ export const GAMES: Game[] = [
   {
     id: 'badminton',
     name: 'Badminton',
-    description: 'Smash, drop and clear. Keep the shuttle in the air and first to 21 wins.',
+    description: 'Singles against the computer on a full-size court. Click to swing, or swing your phone like a racket.',
     category: 'sports',
-    players: { min: 2, max: 4 },
-    status: 'coming-soon',
+    players: { min: 1, max: 1 },
+    status: 'available',
   },
   {
     id: 'tennis',
