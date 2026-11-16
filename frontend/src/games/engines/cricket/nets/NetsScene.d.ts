@@ -2,10 +2,18 @@
 import type { ComponentType, RefObject } from 'react'
 import type { Delivery, Pace } from './shot'
 
-export type NetsView = 'batter' | 'side' | 'machine'
+export type NetsView = 'batter' | 'side' | 'stumps' | 'machine'
 
-/** The bat's controls: x across the crease, y the swing (+1 backlift, -1 follow-through), each -1..1. */
-export type BatInput = { x: number; y: number; auto: number }
+/** The bat's controls: x across the crease, y the swing (+1 backlift, -1 follow-through), each -1..1. With a phone,
+ *  q is its turn since it was centred ([x, y, z, w] in the bat's frame) and the bat follows it freely instead. */
+export type BatInput = {
+  x: number
+  y: number
+  auto: number
+  q?: [number, number, number, number] | null
+  /** With the webcam on: how far it has seen the hands move since centring (metres, world axes). */
+  hands?: { x: number; y: number; z: number } | null
+}
 
 export type NetsSceneProps = {
   view: NetsView

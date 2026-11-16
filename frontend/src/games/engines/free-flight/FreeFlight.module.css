@@ -8,8 +8,8 @@
   --ff-accent2: #ffb36b;
   position: fixed;
   inset: 0;
-  z-index: 40;
-  background: #0b1020;
+  z-index: 1100; /* above the app's tab dock (1000); the component is portalled into <body> */
+  background: #06111f;
   color: var(--ff-text);
   font: 15px/1.4 var(--font-sans);
   user-select: none;
@@ -118,6 +118,106 @@
   cursor: pointer;
 }
 
+/* ---------- Controls behind the "i" button ---------- */
+.panel {
+  position: relative;
+}
+
+.info {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 3;
+}
+
+.infoBtn {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  background: rgb(255 255 255 / 0.06);
+  border: 1px solid var(--ff-line);
+  border-radius: 50%;
+  color: var(--ff-text);
+  font: italic 700 15px Georgia, 'Times New Roman', serif;
+  cursor: pointer;
+  transition: border-color 160ms ease, background-color 160ms ease;
+}
+
+.infoBtn:hover,
+.infoBtn[aria-expanded='true'] {
+  background: rgb(255 122 69 / 0.18);
+  border-color: var(--ff-accent2);
+}
+
+/* Opens beside the menu card, so it never covers the title or buttons (below the button on phones, see the end). */
+.infoPop {
+  position: absolute;
+  top: -14px;
+  left: calc(100% + 26px);
+  width: min(320px, calc(100vw - 48px));
+  padding: 14px 16px;
+  background: rgb(10 16 30 / 0.96);
+  border: 1px solid var(--ff-line);
+  border-radius: 14px;
+  box-shadow: 0 18px 40px rgb(0 0 0 / 0.45);
+  text-align: left;
+  animation: pop-in 160ms ease-out both;
+}
+
+.infoTitle {
+  margin: 0 0 10px;
+  color: var(--ff-dim);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.infoList {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.infoList > div {
+  display: grid;
+  grid-template-columns: 128px 1fr;
+  align-items: center;
+  gap: 10px;
+}
+
+.infoList dt {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+
+.infoList dd {
+  margin: 0;
+  color: var(--ff-text);
+  font-size: 13px;
+}
+
+.infoList kbd {
+  min-width: 22px;
+  padding: 2px 6px;
+  background: rgb(255 255 255 / 0.07);
+  border: 1px solid var(--ff-line);
+  border-radius: 5px;
+  color: var(--ff-text);
+  font: 11px ui-monospace, monospace;
+  text-align: center;
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
 /* Fullscreen toggle: left of the pause button while flying, top right on the menu. */
 .fsBtn {
   position: absolute;
@@ -140,7 +240,53 @@
 }
 
 .fsBtn:hover {
-  border-color: var(--ff-accent);
+  border-color: var(--ff-accent2);
+}
+
+/* Hold-to-boost, touch screens only (no Shift key there). */
+.boostBtn {
+  position: absolute;
+  right: 20px;
+  bottom: 24px;
+  width: 84px;
+  height: 84px;
+  background: linear-gradient(180deg, var(--ff-accent2), var(--ff-accent));
+  border: 2px solid rgb(255 255 255 / 0.35);
+  border-radius: 50%;
+  color: #fff;
+  font: 800 13px var(--font-sans);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+}
+
+.boostBtn:active {
+  filter: brightness(1.2);
+  transform: scale(0.96);
+}
+
+/* Short white flash when the scene changes. */
+.flash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 50%, #fff 0%, rgb(200 230 255 / 0.85) 35%, rgb(120 180 255 / 0) 75%);
+  animation: flash 0.7s ease-out forwards;
+}
+
+@keyframes flash {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.app[data-sky='true'] .vignette {
+  opacity: 0.55;
 }
 
 /* ---------- Menu and pause ---------- */
@@ -246,13 +392,19 @@
   border: 1px solid var(--ff-line);
 }
 
-.worlds {
+.scenes {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
 }
 
-.worldBtn {
+@media (max-width: 360px) {
+  .scenes {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sceneBtn {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -265,8 +417,8 @@
   cursor: pointer;
 }
 
-.worldBtn[aria-pressed='true'] {
-  background: rgb(255 122 69 / 0.14);
+.sceneBtn[aria-pressed='true'] {
+  background: rgb(255 122 69 / 0.16);
   border-color: var(--ff-accent);
 }
 
@@ -277,14 +429,28 @@
   border-radius: 6px;
 }
 
-.swatch[data-world='sky'] {
+.swatch[data-mode='sunset'] {
   background: linear-gradient(180deg, #5d87c9, #f2b48c 70%, #1b4a72 72%);
 }
 
-.swatch[data-world='space'] {
+.swatch[data-mode='islands'] {
+  background:
+    linear-gradient(180deg, transparent 38%, #5b3d2a 38% 52%, transparent 52%) 4px 0 / 10px 100% no-repeat,
+    linear-gradient(180deg, #2f6fd0, #cfe2f4 72%, #ffffff 74%);
+}
+
+.swatch[data-mode='nebula'] {
   background:
     radial-gradient(circle at 70% 30%, #ffd59a 0 12%, transparent 13%),
     radial-gradient(circle at 30% 70%, #6b2f8a, #05060f 70%);
+}
+
+.swatch[data-mode='asteroids'] {
+  background:
+    radial-gradient(circle at 30% 35%, #c9935a 0 26%, transparent 27%),
+    radial-gradient(circle at 74% 72%, #8a8f99 0 9%, transparent 10%),
+    radial-gradient(circle at 60% 30%, #7a7f88 0 6%, transparent 7%),
+    linear-gradient(160deg, #0c1a33, #05060f);
 }
 
 .help {
@@ -307,7 +473,19 @@
   font: 11px ui-monospace, monospace;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .flash {
+    animation-duration: 0.2s;
+  }
+}
+
 @media (max-width: 640px) {
+  .infoPop {
+    top: calc(100% + 8px);
+    left: auto;
+    right: 0;
+  }
+
   .menu {
     justify-content: center;
     padding-top: 64px;
@@ -315,8 +493,14 @@
     background: rgb(5 8 18 / 0.45);
   }
 
+  .hud {
+    right: 116px;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
   .gauge {
-    min-width: 78px;
+    min-width: 72px;
     padding: 6px 9px;
   }
 

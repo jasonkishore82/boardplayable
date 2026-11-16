@@ -153,7 +153,6 @@ export class Game {
       if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') this.keys.boost = true;
       if (e.code === 'Space' && this.mode === 'flying') { this.keys.brake = true; e.preventDefault(); }
       if (e.code === 'KeyC') this.cycleCamera();
-      if (e.code === 'KeyN') this.nextWorld();
       if (e.code === 'KeyR' && this.mode === 'flying') this.respawn();
       if (e.code === 'KeyP' || e.code === 'Escape') this.togglePause();
     };

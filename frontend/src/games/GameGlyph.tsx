@@ -79,26 +79,6 @@ const glyphs: Record<string, Glyph> = {
       </g>
     </>
   ),
-  'free-fly': (url, id) => (
-    <>
-      <defs>
-        {lin(id('sky'), '#2f6fd0', '#cfe2f4')}
-        {lin(id('rock'), '#8c6545', '#4a3022')}
-        {lin(id('wing'), '#7fe0ff', '#2f8fe0', 1, 1)}
-      </defs>
-      <rect x="5" y="5" width="38" height="38" rx="9" fill={url('sky')} />
-      <path d="M5 37h38v-1a6 6 0 0 0-6-5c-3 0-4 2-7 2s-4-3-8-3-5 3-8 3-4-2-9 1z" fill="#fff" opacity="0.9" />
-      <path d="M8 21h11l-2 3-3.5 7-2-6z" fill={url('rock')} />
-      <path d="M7.5 20.6h12v1.6h-12z" fill="#67b04a" />
-      <path d="M28 27h9l-1.6 2.5-2.9 5-1.6-4.5z" fill={url('rock')} />
-      <path d="M27.6 26.6h9.8v1.4h-9.8z" fill="#67b04a" />
-      <g transform="rotate(-18 27 16)">
-        <path d="M17 16.5l18-1.8a1.8 1.8 0 0 1 0 3.6L17 17.5z" fill="#fff" />
-        <path d="M25 16l-5-6.5h3l7.5 6.3zM25 17.3l-5 6.5h3l7.5-6.2z" fill={url('wing')} />
-        <circle cx="16.8" cy="17" r="1.6" fill="#5ad1ff" />
-      </g>
-    </>
-  ),
   warship: (url, id) => (
     <>
       <defs>
@@ -207,6 +187,29 @@ const glyphs: Record<string, Glyph> = {
       <path d="M11 26a7 7 0 0 1 4-3.5" stroke="#fff" strokeOpacity="0.6" strokeWidth="1.5" strokeLinecap="round" fill="none" />
     </>
   ),
+  'face-board': (url, id) => (
+    <>
+      <defs>
+        {lin(id('tray'), '#4f86f0', '#1f4fb8')}
+      </defs>
+      <rect x="4" y="30" width="40" height="12" rx="3" fill={url('tray')} />
+      {[0, 1, 2].map((i) => {
+        const x = 7 + i * 12.5
+        const down = i === 1
+        return down ? (
+          <rect key={i} x={x} y="26" width="9" height="5" rx="1.2" fill="#e6e4de" stroke="#b9b6ae" strokeWidth="0.6" />
+        ) : (
+          <g key={i}>
+            <rect x={x} y="9" width="9" height="22" rx="1.5" fill="#f3f2ee" stroke="#c9c6be" strokeWidth="0.6" />
+            <rect x={x + 1.3} y="11" width="6.4" height="13" rx="0.8" fill="#dfe3e7" />
+            <circle cx={x + 4.5} cy="15.6" r="2.1" fill={i === 0 ? '#c98a6b' : '#8a5a3c'} />
+            <path d={`M${x + 1.6} 24c.6-2.6 1.6-3.7 2.9-3.7s2.3 1.1 2.9 3.7z`} fill={i === 0 ? '#e76f51' : '#2a9d8f'} />
+            <rect x={x + 1.3} y="26" width="6.4" height="2.4" rx="0.5" fill="#fff" />
+          </g>
+        )
+      })}
+    </>
+  ),
   cricket: (url, id) => (
     <>
       <defs>
@@ -260,6 +263,9 @@ const glyphs: Record<string, Glyph> = {
     </>
   ),
 }
+
+// the nets were part of Cricket until they became their own game: the same bat and ball
+glyphs['cricket-nets'] = glyphs.cricket
 
 const fallback: Glyph = () => <rect x="8" y="8" width="32" height="32" rx="6" fill="#8b93a7" />
 

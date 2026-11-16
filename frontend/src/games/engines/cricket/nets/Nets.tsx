@@ -6,10 +6,11 @@ import { usePhoneController, type ControllerHandlers } from '../../../controller
 import { BackArrow } from '../../../room/BackArrow'
 import NetsScene, { type BatInput, type NetsView } from './NetsScene'
 import { BALLS_PER_SESSION, PACES, WICKETS_PER_SESSION, overs, score, type Delivery, type Outcome, type Pace } from './shot'
+import { PALM, handOffset, useHandTracking, type HandSample } from './useHandTracking'
 import styles from './Nets.module.css'
 
 // Cricket nets: a single-player batting game in 3D. The bowling machine fires cricket balls down a full-size pitch and
-// you swing the bat: with your phone held like the handle (the same phone controller as Free Fly, through the dev
+// you swing the bat: with your phone held like the handle (the same phone controller as Free Flight, through the dev
 // server's relay and a QR code on the menu), with the mouse or a finger (down to lift the bat, flick up to swing), or
 // with the Space bar for a timed drive. Two overs, three wickets: score what you can.
 // The models (the bat, the pitch, the bowling machine and its balls) are in this folder; the menu's kit room shows each
@@ -25,6 +26,7 @@ type Kit = 'bat' | 'pitch' | 'machine'
 const VIEWS: { id: NetsView; name: string }[] = [
   { id: 'batter', name: 'Batter' },
   { id: 'side', name: 'Side on' },
+  { id: 'stumps', name: 'Behind the stumps' },
   { id: 'machine', name: 'Behind the machine' },
 ]
 const PACE_KEY = 'bp-cricket-nets-pace'
@@ -67,6 +69,7 @@ export default function Nets() {
   const [pace, setPace] = useState<Pace>(() => load(PACE_KEY, PACES.map((p) => p.id), 'medium'))
   const [view, setView] = useState<NetsView>('batter')
   const [sound, setSound] = useState(true)
+  const [webcam, setWebcam] = useState(false)
   const [bowl, setBowl] = useState(0)
   const [runs, setRuns] = useState(0)
   const [wickets, setWickets] = useState(0)
@@ -87,6 +90,19 @@ export default function Nets() {
   live.current = { ...live.current, phase, paused, runs, wickets, balls }
   const input = useRef<BatInput>({ x: 0, y: 0, auto: 0 })
   const nextTimer = useRef<number | undefined>(undefined)
+
+  // ---- webcam: where the hands are (the phone or the mouse still gives the bat's angle) ----
+  // The hands' resting place is taken from the first frame after the webcam starts, or after taking guard.
+  const handHome = useRef<HandSample | null>(null)
+  const tracker = useHandTracking(webcam, (h) => {
+    if (!h) return // out of view: the grip stays where it was
+    if (!handHome.current) handHome.current = h
+    input.current.hands = handOffset(handHome.current, h)
+  })
+  useEffect(() => {
+    handHome.current = null
+    if (!webcam) input.current.hands = null
+  }, [webcam])
 
   // ---- phone controller (QR code on the menu) ----
   const phoneHandlers = useRef<ControllerHandlers>({})
@@ -114,6 +130,7 @@ export default function Nets() {
     live.current.phase = 'playing'
     live.current.paused = false
     input.current = { x: 0, y: 0, auto: 0 }
+    handHome.current = null // and where the webcam sees the hands now becomes their resting place
     sendRef.current({ type: 'calibrate' }) // the phone's current grip becomes the stance
     queueBall(900)
   }, [queueBall])
@@ -144,9 +161,11 @@ export default function Nets() {
   }, [])
 
   phoneHandlers.current = {
-    onTilt: (x, y) => {
+    onTilt: (x, y, _boost, q) => {
       input.current.x = x
       input.current.y = y
+      // a phone that sends its full turn moves the bat freely; an older controller page still swings it on x and y
+      input.current.q = q ?? null
     },
     onAction: (action) => {
       const ph = live.current.phase
@@ -205,11 +224,17 @@ export default function Nets() {
     })
   }, [phase, paused, runs, wickets, balls, paceName, last, ctrl.send, ctrl.phones])
 
+  // A phone that stops sending lets go of the bat, so it doesn't stay frozen at the phone's last angle.
+  useEffect(() => {
+    if (!ctrl.ready) input.current.q = null
+  }, [ctrl.ready])
+
   // ---- mouse and touch: down lifts the bat, up swings it through ----
   const pointerDown = useRef(false)
   const steer = (e: PointerEvent<HTMLDivElement>) => {
     if (ctrl.ready || phase !== 'playing') return
     if (e.pointerType !== 'mouse' && !pointerDown.current) return
+    input.current.q = null
     const r = e.currentTarget.getBoundingClientRect()
     const nx = ((e.clientX - r.left) / r.width) * 2 - 1
     const ny = ((e.clientY - r.top) / r.height) * 2 - 1
@@ -285,9 +310,39 @@ export default function Nets() {
       </div>
       <div className={styles.vignette} />
 
+      {webcam && (
+        <div className={styles.cam}>
+          {/* mirrored, so moving your hand right moves it right here too */}
+          <div className={styles.camView}>
+            <video ref={tracker.videoRef} muted playsInline />
+            <svg viewBox="0 0 1 0.75" preserveAspectRatio="none" aria-hidden="true">
+              {tracker.hands.flatMap((lm, i) =>
+                lm.map((p, j) => <circle key={`${i}-${j}`} cx={p.x} cy={p.y * 0.75} r={PALM.includes(j) ? 0.012 : 0.006} />),
+              )}
+            </svg>
+          </div>
+          <div className={styles.camBar}>
+            <span>{tracker.status}</span>
+            <button type="button" onClick={() => (handHome.current = null)} title="Where your hands are now becomes the stance">
+              Re-centre
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className={styles.corner}>
         <button type="button" className={styles.roundBtn} onClick={() => setSound((s) => !s)} aria-label={sound ? 'Sound off' : 'Sound on'} title={sound ? 'Sound off' : 'Sound on'}>
           {sound ? '🔊' : '🔈'}
+        </button>
+        <button
+          type="button"
+          className={styles.roundBtn}
+          onClick={() => setWebcam((w) => !w)}
+          aria-pressed={webcam}
+          aria-label={webcam ? 'Stop tracking hands with the webcam' : 'Track hands with the webcam'}
+          title={webcam ? 'Stop tracking hands with the webcam' : 'Track hands with the webcam'}
+        >
+          📷
         </button>
         {canFullscreen && (
           <button type="button" className={styles.roundBtn} onClick={toggleFullscreen} aria-label={isFullscreen ? 'Exit fullscreen (F)' : 'Fullscreen (F)'} title={isFullscreen ? 'Exit fullscreen (F)' : 'Fullscreen (F)'}>
@@ -335,7 +390,7 @@ export default function Nets() {
           {phase === 'playing' && !paused && (
             <p className={styles.hint}>
               {ctrl.ready
-                ? 'Tip your phone back to lift the bat, flick it forward to swing.'
+                ? 'The bat copies your phone. Swing it like a real bat: lift it back, then bring it down through the ball.'
                 : touch
                   ? 'Drag down to lift the bat, flick up through the ball to swing.'
                   : 'Mouse down to lift the bat, flick it up through the ball. Or press Space.'}
@@ -387,8 +442,8 @@ export default function Nets() {
 
       {phase === 'menu' && (
         <div className={[styles.overlay, styles.menu].join(' ')}>
-          <Link to="/games/cricket" className={styles.leave}>
-            <BackArrow /> Cricket
+          <Link to="/games" className={styles.leave}>
+            <BackArrow /> Games
           </Link>
           <div className={styles.panel}>
             <h1 className={styles.h1}>
@@ -499,6 +554,7 @@ const KEY_ROWS: [keys: string[], action: string][] = [
   [['M'], 'Back to menu'],
   [['F'], 'Fullscreen'],
   [['Phone'], 'Scan the QR code and swing your phone'],
+  [['📷'], 'Webcam: move your hands and the grip follows'],
 ]
 const TOUCH_ROWS: [keys: string[], action: string][] = [
   [['Drag ↓'], 'Lift the bat'],

@@ -1,4 +1,4 @@
-// Phone-as-controller relay for the gyro games (Free Fly, Free Flight, Cricket nets, Bowling, Badminton). Development only (`vite` / `npm run dev`).
+// Phone-as-controller relay for the gyro games (Free Flight, Cricket nets, Bowling, Badminton). Development only (`vite` / `npm run dev`).
 //
 // Phones only share motion sensors with secure (https) pages, but the app itself runs on plain http, so the relay
 // listens on two extra ports:
@@ -24,7 +24,7 @@ export const PHONE_PORT = 5180;
 export const GAME_PORT = 5181;
 const WS_PATH = '/gyro-ws';
 const ROOM_RE = /^[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{4}$/;
-const GAMES = new Set(['free-fly', 'free-flight', 'cricket', 'bowling', 'badminton']);
+const GAMES = new Set(['free-flight', 'cricket', 'bowling', 'badminton']);
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const CONTROLLERS_DIR = path.join(here, '..', 'controllers');
@@ -226,7 +226,7 @@ export default function controllerRelay() {
 
       server.httpServer?.once('listening', () => {
         setTimeout(() => {
-          console.log('\n  Phone controllers (Free Fly, Free Flight, Cricket nets, Bowling, Badminton): scan the QR code on the game\'s menu.');
+          console.log('\n  Phone controllers (Free Flight, Cricket nets, Bowling, Badminton): scan the QR code on the game\'s menu.');
           for (const ip of ips) console.log(`  Controller pages:  https://${ip}:${PHONE_PORT}/controller/<game>.html`);
           console.log('  Self-signed certificate: on the phone choose "Advanced" / "Show Details" and continue.\n');
         }, 50);

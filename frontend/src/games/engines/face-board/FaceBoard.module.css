@@ -1,0 +1,35 @@
+/* Face Board fills the whole window, over the app's shell, in the scene's own warm grey whatever the theme. */
+.app {
+  position: fixed;
+  inset: 0;
+  z-index: 1100; /* above the app's tab dock (1000); the component is portalled into <body> */
+  background: #e9e7e3;
+  color: #2a2925;
+  font: 15px/1.4 var(--font-sans);
+}
+
+.app canvas {
+  display: block;
+}
+
+.leave {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 7;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: rgb(255 255 255 / 0.9);
+  border-radius: 999px;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.14), inset 0 0 0 1px rgb(0 0 0 / 0.08);
+  color: #2a2925;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.leave:hover {
+  background: #fff;
+}

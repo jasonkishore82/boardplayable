@@ -106,7 +106,7 @@
 
   <div id="setup">
     <h1 style="font-size:24px">BAT<span>PAD</span></h1>
-    <p>Your phone is the bat. Hold it upright like the handle, screen towards you. Tip it back to lift the bat, then flick it forward through the line of the ball. Tilt it sideways to move across the crease.</p>
+    <p>Your phone is the bat's handle. Hold it upright, top up and screen towards you, with the blade hanging below it. The bat copies every turn of the phone, so swing it like a real bat: lift it back, then bring it down through the line of the ball.</p>
     <button id="btnEnable" class="big">Enable motion</button>
     <div id="msg"></div>
   </div>
@@ -115,9 +115,9 @@
     <div class="sheet-inner">
       <div class="opt"><b>SETTINGS</b><button id="btnClose" class="gear" aria-label="Close">✕</button></div>
       <label class="opt"><span>Swing range</span><input id="sens" type="range" min="15" max="80" step="1" /><span id="sensV" style="width:36px;text-align:right"></span></label>
-      <label class="opt"><span>Reverse the swing</span><input id="invert" type="checkbox" /></label>
+      <label class="opt"><span>Left-handed (mirror)</span><input id="invert" type="checkbox" /></label>
       <label class="opt"><span>Vibration</span><input id="haptics" type="checkbox" /></label>
-      <p style="color:var(--dim);font-size:12px">The way you hold the phone when you press Start (or Recenter) becomes your stance. A smaller swing range means a smaller flick of the wrist does the full swing.</p>
+      <p style="color:var(--dim);font-size:12px">The way you hold the phone when you press Start (or Recenter) becomes your stance. At 40° the bat turns exactly as far as the phone; a smaller swing range makes a small turn of the wrist swing the bat further.</p>
     </div>
   </div>
 
@@ -205,11 +205,39 @@ function haptic(name) {
 // The same sum as the flying games' controllers: build "world up" in device coordinates from beta/gamma, turn it into
 // the screen's frame, then read roll (across the crease) and pitch (the swing). Works upright, in portrait or
 // landscape, and never touches alpha (compass), so it does not drift.
-const tilt = { roll: 0, pitch: 0, has: false };
+const tilt = { roll: 0, pitch: 0, has: false, q: [0, 0, 0, 1] };
 let neutral = null;
+
+// ---------- the phone's whole turn, for a bat that moves freely ----------
+// Quaternions as [x, y, z, w]. The phone's orientation is Rz(alpha) Rx(beta) Ry(gamma) (device to earth, as the
+// DeviceOrientation spec defines it). Its turn since centring, q0^-1 q, is in the phone's own axes at centring: held
+// upright with the screen towards you, those are the bat's axes (x across the face, y up the handle, z out of the
+// back), so the game turns the bat by exactly this. alpha drifts a little on some phones; Recenter resets it.
+const qmul = (a, b) => [
+  a[3] * b[0] + a[0] * b[3] + a[1] * b[2] - a[2] * b[1],
+  a[3] * b[1] - a[0] * b[2] + a[1] * b[3] + a[2] * b[0],
+  a[3] * b[2] + a[0] * b[1] - a[1] * b[0] + a[2] * b[3],
+  a[3] * b[3] - a[0] * b[0] - a[1] * b[1] - a[2] * b[2],
+];
+const qaxis = (i, rad) => { const q = [0, 0, 0, Math.cos(rad / 2)]; q[i] = Math.sin(rad / 2); return q; };
+const qconj = (q) => [-q[0], -q[1], -q[2], q[3]];
+function deviceQuat(alpha, beta, gamma) {
+  return qmul(qmul(qaxis(2, (alpha || 0) * D2R), qaxis(0, beta * D2R)), qaxis(1, gamma * D2R));
+}
+// scales a turn's angle by k (the swing range setting), keeping its axis
+function qscale(q, k) {
+  let [x, y, z, w] = q;
+  if (w < 0) { x = -x; y = -y; z = -z; w = -w; }
+  const s = Math.hypot(x, y, z);
+  if (s < 1e-6) return [0, 0, 0, 1];
+  const a = Math.min(Math.PI, 2 * Math.atan2(s, w) * k);
+  const f = Math.sin(a / 2) / s;
+  return [x * f, y * f, z * f, Math.cos(a / 2)];
+}
 
 function onOrient(e) {
   if (e.beta == null || e.gamma == null) return;
+  tilt.q = deviceQuat(e.alpha, e.beta, e.gamma);
   const b = e.beta * D2R, g = e.gamma * D2R;
   const ux = -Math.cos(b) * Math.sin(g), uy = Math.sin(b), uz = Math.cos(b) * Math.cos(g);
   const ang = ((screen.orientation && screen.orientation.angle) ?? window.orientation ?? 0) * D2R;
@@ -222,15 +250,19 @@ function onOrient(e) {
 }
 
 function calibrate() {
-  if (tilt.has) neutral = { roll: tilt.roll, pitch: tilt.pitch };
+  if (tilt.has) neutral = { roll: tilt.roll, pitch: tilt.pitch, q: tilt.q };
 }
 
 const wrap = (d) => ((d + 540) % 360) - 180;
 const dead = (v, dz) => (Math.abs(v) < dz ? 0 : v - Math.sign(v) * dz);
-let out = { x: 0, y: 0 };
+let out = { x: 0, y: 0, q: [0, 0, 0, 1] };
 
 function loop() {
   if (tilt.has && neutral) {
+    let q = qscale(qmul(qconj(neutral.q), tilt.q), 40 / cfg.sens);
+    // left-handed: the whole swing mirrored left to right
+    if (cfg.invert) q = [q[0], -q[1], -q[2], q[3]];
+    out.q = q;
     const dr = dead(wrap(tilt.roll - neutral.roll), 3);
     const dp = dead(wrap(tilt.pitch - neutral.pitch), 1.5);
     out.x = clamp(dr / 35, -1, 1);
@@ -245,7 +277,8 @@ loop();
 
 // ~60 Hz to the game
 setInterval(() => {
-  if (tilt.has && neutral) send({ type: 'tilt', x: +out.x.toFixed(3), y: +out.y.toFixed(3), b: 0 });
+  // x and y for older games; q is the whole turn, which the nets use to move the bat freely
+  if (tilt.has && neutral) send({ type: 'tilt', x: +out.x.toFixed(3), y: +out.y.toFixed(3), b: 0, q: out.q.map((v) => +v.toFixed(4)) });
 }, 16);
 
 // ---------- wake lock (keep the screen on while batting) ----------

@@ -20,8 +20,10 @@ export const engines: Record<string, () => Promise<EngineModule>> = {
   chess: () => import('./engines/chess'),
   'tic-tac-toe': () => import('./engines/tic-tac-toe'),
   cricket: () => import('./engines/cricket'),
+  'cricket-nets': () => import('./engines/cricket-nets'),
   'free-flight': () => import('./engines/free-flight'),
-  'free-fly': () => import('./engines/free-fly'),
   bowling: () => import('./engines/bowling'),
   badminton: () => import('./engines/badminton'),
+  'face-board': () => import('./engines/face-board'),
+  'one-card': () => import('./engines/one-card'),
 }

@@ -1,4 +1,4 @@
-// Types for the plain-JS Free Fly engine (copied from gyro_games/free-fly).
+// Types for the plain-JS Free Fly engine (copied from gyro_games/free-fly); flies the Sky Islands and Asteroid Belt modes of Free Flight.
 
 export type FlyScene = 'sky' | 'space'
 

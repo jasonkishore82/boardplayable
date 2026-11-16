@@ -24,6 +24,8 @@ const PITCH_X = STUMPS.x - STUMPS_Z // where the middle of the pitch sits along 
 const VIEWS = {
   batter: { pos: [13.75, 1.42, 0.78], look: [2, 0.55, -0.15], fov: 42 },
   side: { pos: [9.3, 1.35, 2.3], look: [10.9, 0.5, 0], fov: 44 },
+  // the keeper's eye line: just inside the back net, low, straight down the pitch over the stumps and the bat
+  stumps: { pos: [13.75, 0.95, 0], look: [0, 0.6, 0], fov: 40 },
   machine: { pos: [-2.4, 1.9, 0.5], look: [11.5, 0.45, 0], fov: 36 },
 }
 
@@ -185,7 +187,7 @@ function Scene({ view, pace, bowl, input, sound, onDelivery, onContact, onReport
       else if (since < 0.5) y = -1
       else inp.auto = 0
     }
-    stepBatter(bat, { x: inp.x, y }, h)
+    stepBatter(bat, { x: inp.x, y, q: inp.auto ? null : inp.q, hands: inp.hands }, h)
 
     const d = ball.current
     if (!d || d.done) return
@@ -254,7 +256,7 @@ function Scene({ view, pace, bowl, input, sound, onDelivery, onContact, onReport
 
 /**
  * The nets, ready to drop into a page. Props:
- *   view      'batter' | 'side' | 'machine'
+ *   view      'batter' | 'side' | 'stumps' | 'machine'
  *   pace      'medium' | 'fast' | 'express'
  *   bowl      bump to bowl the next ball
  *   input     a ref holding { x, y, auto }: the bat's controls (auto: a timestamp that starts a scripted swing)

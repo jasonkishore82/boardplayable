@@ -1,5 +1,5 @@
 /* Bowling fills the whole window, over the app's shell, with its own dark colours whatever the theme.
-   Laid out like Free Fly and the cricket nets; the accents are the alley's neon pink and blue. */
+   Laid out like Free Flight and the cricket nets; the accents are the alley's neon pink and blue. */
 .app {
   --bw-text: #f6f3ff;
   --bw-dim: #c3bcd8;

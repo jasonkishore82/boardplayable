@@ -14,7 +14,7 @@ import styles from './Bowling.module.css'
 // Bowling: four lanes, ten frames, up to four bowlers on one screen, each on their own lane with a TV over it showing
 // their scorecard. Bowlers take turns a frame at a time and the camera moves to whoever is up. Roll by flicking the
 // mouse or a finger up the screen, with the arrow keys and Space, or with a phone held like the ball (the same phone
-// controller as Free Fly: scan the QR code on the menu, tilt to step along the foul line, swing back and forward to
+// controller as Free Flight: scan the QR code on the menu, tilt to step along the foul line, swing back and forward to
 // let it go). Any bowler can be the computer.
 
 const BowlingPinModel = lazy(() => import('./models/BowlingPinModel.jsx'))

@@ -15,7 +15,7 @@ import styles from './Badminton.module.css'
 
 // Badminton: a game of singles against the computer on a full-size BWF court. Your player runs to the shuttle on
 // their own; you choose when to swing and where it goes. Aim with the mouse (where on their court) and click to
-// swing, or the arrow keys and Space; or hold your phone like the racket (the same phone controller as Free Fly: scan
+// swing, or the arrow keys and Space; or hold your phone like the racket (the same phone controller as Free Flight: scan
 // the QR code on the menu), tilt it to aim across the court and swing it back and through to hit. A soft swing
 // drops it short, a hard one from up high smashes.
 

@@ -4,12 +4,13 @@ import { useCallback, useEffect, useRef, useState, type RefObject } from 'react'
 // can steer it. The relay only runs with `npm run dev`; anywhere else (or on an https page, which can't open the
 // relay's plain-ws port) `available` stays false and the menu shows no QR code.
 
-export type ControllerGame = 'free-fly' | 'free-flight' | 'cricket' | 'bowling' | 'badminton'
+export type ControllerGame = 'free-flight' | 'cricket' | 'bowling' | 'badminton'
 
 export type ControllerHandlers = {
-  /** Tilt from the phone, each axis -1..1. Free Fly also sends `boost` with every tilt. Cricket: x across the crease,
-   *  y the swing (+1 backlift, -1 follow-through). */
-  onTilt?: (x: number, y: number, boost: boolean) => void
+  /** Tilt from the phone, each axis -1..1. Cricket: x across the crease,
+   *  y the swing (+1 backlift, -1 follow-through). q, when the phone page sends it (cricket): the phone's whole turn
+   *  since it was centred, [x, y, z, w]. */
+  onTilt?: (x: number, y: number, boost: boolean, q?: [number, number, number, number]) => void
   /** Buttons on the phone: 'primary', 'menu', 'scene', and game-specific ones. */
   onAction?: (action: string) => void
 }
@@ -98,7 +99,7 @@ export function usePhoneController(game: ControllerGame, handlers: RefObject<Con
       }
       ws.onerror = () => ws?.close()
       ws.onmessage = (e) => {
-        let m: { type?: string; phones?: number; x?: number; y?: number; b?: number; action?: string }
+        let m: { type?: string; phones?: number; x?: number; y?: number; b?: number; q?: unknown; action?: string }
         try {
           m = JSON.parse(e.data)
         } catch {
@@ -108,7 +109,11 @@ export function usePhoneController(game: ControllerGame, handlers: RefObject<Con
         else if (m.type === 'tilt') {
           if (performance.now() - lastTilt.current > 1500) setReady(true)
           lastTilt.current = performance.now()
-          handlers.current?.onTilt?.(Number(m.x) || 0, Number(m.y) || 0, !!m.b)
+          const q =
+            Array.isArray(m.q) && m.q.length === 4 && m.q.every((n) => Number.isFinite(n))
+              ? (m.q as [number, number, number, number])
+              : undefined
+          handlers.current?.onTilt?.(Number(m.x) || 0, Number(m.y) || 0, !!m.b, q)
         } else if (m.type === 'action' && typeof m.action === 'string') handlers.current?.onAction?.(m.action)
       }
     }

@@ -254,7 +254,7 @@ function leave() {
 function applyState(m) {
   $('vSpeed').textContent = m.speed ?? 0;
   $('vAlt').textContent = m.altitude ?? '∞';
-  $('vWorld').textContent = (m.world || '–').replace(/^(Sunset|Deep) /, '');
+  $('vWorld').textContent = m.world || '–';
   $('vState').textContent = m.mode === 'menu' ? 'Menu' : m.paused ? 'Paused' : 'Flying';
   $('altFill').style.height = (clamp(m.altNorm ?? 0.5, 0, 1) * 100).toFixed(1) + '%';
   $('btnPrimary').textContent = m.mode === 'menu' ? 'Take off' : m.paused ? 'Resume' : 'Pause';

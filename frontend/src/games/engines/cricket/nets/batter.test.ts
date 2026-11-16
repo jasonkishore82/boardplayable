@@ -24,7 +24,8 @@ function launch(kmh: number, elevation: number, line: number): BallBody {
 type Run = { contact: number; ball: BallBody; exit: { vx: number; vy: number; vz: number; y: number } | null }
 
 /** Bowls one ball; `input(t)` is the bat's control at time t. Runs until the ball is well past the crease or away. */
-function play(kmh: number, elevation: number, line: number, input: (t: number) => { x: number; y: number }): Run {
+type Input = { x: number; y: number; q?: [number, number, number, number] }
+function play(kmh: number, elevation: number, line: number, input: (t: number) => Input): Run {
   const bat = createBatter()
   const ball = launch(kmh, elevation, line)
   let contact = 0
@@ -94,6 +95,94 @@ describe('the batter in the nets', () => {
     expect(best).toBeGreaterThan(blockSpeed * 2)
     expect(best).toBeGreaterThan(20) // a boundary
     expect(['FOUR!', 'SIX!']).toContain(bestOutcome)
+  })
+
+  describe('moved freely by a phone (input.q)', () => {
+    // the phone's turn about one of the bat's own axes (0 x across the face, 1 y up the handle, 2 z out of the back)
+    const turn = (axis: 0 | 1 | 2, rad: number): [number, number, number, number] => {
+      const v = new Vector3()
+      v.setComponent(axis, 1)
+      const q = new Quaternion().setFromAxisAngle(v, rad)
+      return [q.x, q.y, q.z, q.w]
+    }
+    const settle = (q: [number, number, number, number]) => {
+      const bat = createBatter()
+      for (let i = 0; i < 600; i++) stepBatter(bat, { x: 0, y: 0, q }, H)
+      return bat
+    }
+    const toe = (bat: ReturnType<typeof createBatter>) => new Vector3(0, 0, 0).applyQuaternion(bat.quat).add(bat.pos)
+    const faceNormal = (bat: ReturnType<typeof createBatter>) => new Vector3(0, 0, -1).applyQuaternion(bat.quat)
+
+    it('a centred phone holds the same stance as the two-axis bat', () => {
+      const free = settle(turn(0, 0))
+      const two = createBatter()
+      for (let i = 0; i < 600; i++) stepBatter(two, still(), H)
+      expect(free.quat.angleTo(two.quat)).toBeLessThan(1e-3)
+      expect(free.pos.distanceTo(two.pos)).toBeLessThan(1e-3)
+    })
+
+    it('turns in every direction, not just the swing', () => {
+      const stance = settle(turn(0, 0))
+      // tip the top of the handle towards the bowler: the toe goes back towards the keeper (+x), up into the backlift
+      const back = settle(turn(0, -1))
+      expect(toe(back).x - toe(stance).x).toBeGreaterThan(0.3)
+      expect(toe(back).y).toBeGreaterThan(toe(stance).y + 0.2)
+      // roll it sideways: the toe swings across the crease
+      const across = settle(turn(2, 0.8))
+      expect(Math.abs(toe(across).z - toe(stance).z)).toBeGreaterThan(0.4)
+      // twist the handle: the face turns, the toe hardly moves
+      const twist = settle(turn(1, 0.8))
+      expect(toe(twist).distanceTo(toe(stance))).toBeLessThan(0.2)
+      expect(faceNormal(twist).angleTo(faceNormal(stance))).toBeGreaterThan(0.7)
+    })
+
+    it('the hands move with the swing instead of staying at one spot', () => {
+      const stance = settle(turn(0, 0))
+      // the backlift takes the hands back towards the keeper
+      expect(settle(turn(0, -1.5)).hands.x - stance.hands.x).toBeGreaterThan(0.2)
+      // the follow-through takes them forward towards the bowler and up
+      const follow = settle(turn(0, 1.9))
+      expect(stance.hands.x - follow.hands.x).toBeGreaterThan(0.3)
+      expect(follow.hands.y - stance.hands.y).toBeGreaterThan(0.2)
+      // rolling the bat across carries the hands across the crease
+      expect(Math.abs(settle(turn(2, 0.8)).hands.z)).toBeGreaterThan(0.15)
+    })
+
+    it('the toe never digs into the pitch, however the phone is turned', () => {
+      for (const axis of [0, 1, 2] as const)
+        for (let a = -Math.PI; a <= Math.PI; a += 0.25) expect(toe(settle(turn(axis, a))).y).toBeGreaterThan(0)
+    })
+
+    it('a free swing through the line hits far harder than a block', () => {
+      const block = play(70, -4, 0, still)
+      let best = 0
+      // the phone streams its angle as it goes (60 a second), sweeping from the backlift to the follow-through in 0.15 s
+      const at = (t: number, start: number) => {
+        const k = Math.min(1, Math.max(0, (t - start) / 0.15))
+        return turn(0, -1.5 + 3.4 * (Math.floor(k * 9) / 9))
+      }
+      for (let start = 0.2; start < 0.75; start += 0.01) {
+        const r = play(70, -4, 0, (t) => ({ x: 0, y: 0, q: at(t, start) }))
+        if (r.exit && r.exit.vx < 0) best = Math.max(best, Math.hypot(r.exit.vx, r.exit.vz))
+      }
+      expect(best).toBeGreaterThan(Math.hypot(block.exit!.vx, block.exit!.vz) * 2)
+    })
+  })
+
+  it('the webcam moves the grip to where it sees the hands, with the phone or the mouse', () => {
+    const moved = { x: -0.2, y: 0.3, z: -0.4 } // towards the screen, up and to the batter's right
+    for (const q of [[0, 0, 0, 1] as [number, number, number, number], undefined]) {
+      const rest = createBatter()
+      const bat = createBatter()
+      for (let i = 0; i < 600; i++) {
+        stepBatter(rest, { x: 0, y: 0, q }, H)
+        stepBatter(bat, { x: 0, y: 0, q, hands: moved }, H)
+      }
+      const d = bat.hands.clone().sub(rest.hands)
+      expect(d.x).toBeCloseTo(moved.x, 2)
+      expect(d.y).toBeCloseTo(moved.y, 2)
+      expect(d.z).toBeCloseTo(moved.z, 2)
+    }
   })
 
   it('faster bowling still meets the bat', () => {

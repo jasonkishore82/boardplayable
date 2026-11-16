@@ -1,0 +1,35 @@
+/* One Card fills the whole window, over the app's shell, on the deck scene's dark table whatever the theme. */
+.app {
+  position: fixed;
+  inset: 0;
+  z-index: 1100; /* above the app's tab dock (1000); the component is portalled into <body> */
+  background: #26282b;
+  color: #f4f1ea;
+  font: 15px/1.4 var(--font-sans);
+}
+
+.app canvas {
+  display: block;
+}
+
+.leave {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 7;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: rgb(255 255 255 / 0.1);
+  border: 1px solid rgb(255 255 255 / 0.18);
+  border-radius: 999px;
+  color: #f4f1ea;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.leave:hover {
+  border-color: rgb(255 255 255 / 0.4);
+}

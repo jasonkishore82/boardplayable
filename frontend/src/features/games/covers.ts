@@ -9,8 +9,8 @@ type Pair = [string, string]
 const BY_GAME: Record<string, Pair> = {
   chess: ['#c98a4b', '#4a230d'],
   'tic-tac-toe': ['#ff5fa2', '#4b23b8'],
+  'face-board': ['#2b62d9', '#0f2a66'],
   'free-flight': ['#5d87c9', '#e89a6c'],
-  'free-fly': ['#2f6fd0', '#5ad1ff'],
   warship: ['#2fb7ff', '#0b3570'],
   'snakes-and-ladders': ['#57c36a', '#18552e'],
   'game-of-life': ['#ffb347', '#c73e85'],
@@ -19,6 +19,7 @@ const BY_GAME: Record<string, Pair> = {
   poker: ['#d62f4b', '#33091a'],
   bowling: ['#6a7bff', '#1a2066'],
   cricket: ['#8bc34a', '#24501a'],
+  'cricket-nets': ['#3f9a3a', '#123d1c'],
   badminton: ['#9fb4d8', '#2e3f66'],
   tennis: ['#c6d93f', '#2f6b25'],
   'table-tennis': ['#ff7043', '#1e3a8a'],
@@ -39,7 +40,6 @@ const SHOTS: Record<string, string> = {
   chess: '/covers/chess.jpg',
   'tic-tac-toe': '/covers/tic-tac-toe.jpg',
   'free-flight': '/covers/free-flight.jpg',
-  'free-fly': '/covers/free-fly.jpg',
 }
 
 /** The game's in-game screenshot, when it has one. */
