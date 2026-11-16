@@ -201,16 +201,29 @@ function Markers({ match, aimVisible }) {
     if (showAim) {
       const plan = yourShot(0, m.aim, 0.6, 1.8)
       aim.current.position.set(plan.to.x, MAT_T + 0.004, plan.to.z)
+      // bob gently, so it reads as a marker and not part of the court
+      aim.current.children[2].position.y = 1.28 + Math.sin(performance.now() / 260) * 0.06
     }
     land.current.visible = m.phase === 'point' && m.shuttle.landed
     if (land.current.visible) land.current.position.set(m.shuttle.p.x, MAT_T + 0.004, m.shuttle.p.z)
   })
   return (
     <>
-      <mesh ref={aim} rotation-x={-Math.PI / 2}>
-        <ringGeometry args={[0.22, 0.3, 40]} />
-        <meshBasicMaterial color="#ffd23f" transparent opacity={0.85} depthWrite={false} />
-      </mesh>
+      {/* seen from behind the far baseline a flat ring is a sliver, so a glowing post stands over it too */}
+      <group ref={aim}>
+        <mesh rotation-x={-Math.PI / 2}>
+          <ringGeometry args={[0.32, 0.46, 48]} />
+          <meshBasicMaterial color="#ffd23f" transparent opacity={0.9} depthWrite={false} />
+        </mesh>
+        <mesh position-y={0.6}>
+          <cylinderGeometry args={[0.035, 0.035, 1.2, 12]} />
+          <meshBasicMaterial color="#ffd23f" transparent opacity={0.55} depthWrite={false} />
+        </mesh>
+        <mesh position-y={1.28} rotation-x={Math.PI}>
+          <coneGeometry args={[0.13, 0.22, 20]} />
+          <meshBasicMaterial color="#ffd23f" transparent opacity={0.9} depthWrite={false} />
+        </mesh>
+      </group>
       <mesh ref={land} rotation-x={-Math.PI / 2}>
         <ringGeometry args={[0.1, 0.16, 32]} />
         <meshBasicMaterial color="#ff4d5e" transparent opacity={0.9} depthWrite={false} />
