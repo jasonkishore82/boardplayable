@@ -27,6 +27,7 @@ export function describeResult(gameId: string, game: EndedGame, myId: string | u
   if (!winner) return null
 
   const reason = game.reason ?? null
+  if (gameId === 'cricket') return describeCricket(game, myId)
   const plies = game.history?.length ?? 0
   // Chess counts a move as a turn by each side; other games count every move.
   const count = gameId === 'chess' ? Math.ceil(plies / 2) : plies
@@ -54,4 +55,22 @@ export function describeResult(gameId: string, game: EndedGame, myId: string | u
   const title = reason === 'checkmate' ? 'Checkmate' : mine ? 'You win!' : seated ? 'You lose' : 'Game over'
   const detail = mine ? `You win as ${side}.` : `${name} wins as ${side}.`
   return { title, detail, meta, tone }
+}
+
+/** Cricket counts balls, and says how the match was won rather than which side the winner sat on. */
+function describeCricket(game: EndedGame, myId: string | undefined): ResultInfo {
+  const balls = game.history?.length ?? 0
+  const meta = balls > 0 ? `${balls} ${balls === 1 ? 'ball' : 'balls'} bowled` : null
+  if (game.winner === 'draw') return { title: 'Tie', detail: 'Scores finished level.', meta, tone: 'draw' }
+  const seat = game.winner ? game.seats[game.winner] : null
+  const mine = !!myId && seat?.id === myId
+  const seated = !!myId && Object.values(game.seats).some((s) => s?.id === myId)
+  const name = seat?.username ?? capitalise(game.winner ?? '')
+  const how = game.reason === 'chased the target' ? 'chasing the target' : 'defending the total'
+  return {
+    title: mine ? 'You win!' : seated ? 'You lose' : 'Game over',
+    detail: mine ? `You won by ${how}.` : `${name} won by ${how}.`,
+    meta,
+    tone: mine ? 'win' : seated ? 'loss' : 'neutral',
+  }
 }

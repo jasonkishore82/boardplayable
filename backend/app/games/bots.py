@@ -1,4 +1,4 @@
-"""Computer opponents for tic-tac-toe. Chess bots are in chessbots.py.
+"""Computer opponents for tic-tac-toe. Chess bots are in chessbots.py, cricket bots in cricket.py.
 
     easy    plays a random legal move
     medium  takes a win, blocks yours, otherwise likes the centre and corners (it can still be tricked)
@@ -156,6 +156,12 @@ def make_bot(kind: str, custom_path: str = "", game: str = "tic-tac-toe", maia_d
         from .chessbots import make_chess_bot
 
         return make_chess_bot(kind, maia_dir)
+    if game == "cricket":
+        from .cricket import CRICKET_BOTS
+
+        if kind not in CRICKET_BOTS:
+            raise BotUnavailable(f"unknown bot: {kind}")
+        return CRICKET_BOTS[kind]()
     if kind == "easy":
         return EasyBot()
     if kind == "medium":
@@ -171,6 +177,10 @@ def list_bots(custom_path: str = "", game: str = "tic-tac-toe", maia_dir: str = 
         from .chessbots import list_chess_bots
 
         return list_chess_bots(maia_dir)
+    if game == "cricket":
+        from .cricket import CRICKET_INFO
+
+        return [{**info, "available": True} for info in CRICKET_INFO]
     out = []
     for info in INFO:
         try:

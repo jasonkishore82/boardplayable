@@ -1,0 +1,189 @@
+.pitch {
+  display: grid;
+  gap: var(--space-4);
+  width: 100%;
+}
+
+.card {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.team {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.batting {
+  border-color: transparent;
+  box-shadow: 0 0 0 2px var(--focus);
+}
+
+.teamHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.teamName {
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.you {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.total {
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.teamMeta {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.balls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: var(--space-1) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.balls li {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--border-strong);
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.balls li.six {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.balls li.wicket {
+  color: var(--danger);
+  background: var(--danger-soft);
+  border-color: var(--danger);
+}
+
+.chase {
+  margin: 0;
+  font-weight: 600;
+  text-align: center;
+}
+
+.reveal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  animation: pop 260ms var(--ease, ease-out);
+}
+
+.hand {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.hand small {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.vs {
+  color: var(--text-muted);
+}
+
+.what {
+  min-height: 1.5em;
+  margin: 0;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.what.out {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.picks {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: var(--space-2);
+}
+
+.pick {
+  aspect-ratio: 1;
+  min-width: 0;
+  padding: 0;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  font: inherit;
+  font-size: clamp(18px, 5vw, 24px);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color var(--duration) var(--ease), border-color var(--duration) var(--ease);
+}
+
+.pick:hover:not(:disabled) {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.pick:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.pick:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    animation: none;
+  }
+}

@@ -38,6 +38,14 @@ export const GAMES: Game[] = [
     status: 'available',
   },
   {
+    id: 'cricket',
+    name: 'Cricket',
+    description: 'Hand cricket: pick 1 to 6 each ball. Match the batter to bowl them out.',
+    category: 'classic',
+    players: { min: 2, max: 2 },
+    status: 'available',
+  },
+  {
     id: 'warship',
     name: 'Warship',
     description: 'Hide your fleet, call your shots, sink theirs first.',

@@ -49,6 +49,14 @@ const glyphs: Record<string, ReactNode> = {
       <path d="M27 20l3-2v12" transform="rotate(8 28 24)" />
     </g>
   ),
+  cricket: (
+    <g {...common}>
+      <path d="M30.5 9.5l4 4-15 15-4-4z" />
+      <path d="M17.5 26.5l-7 7a2 2 0 002.8 2.8l7-7" />
+      <circle cx="35" cy="34" r="4" />
+      <path d="M32.2 31.2c1.6 1.6 1.6 4.2 0 5.6" opacity="0.45" />
+    </g>
+  ),
   'tic-tac-toe': (
     <g {...common}>
       <path d="M19 9v30M29 9v30M9 19h30M9 29h30" />

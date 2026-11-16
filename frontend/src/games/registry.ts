@@ -19,4 +19,5 @@ type EngineModule = { default: ComponentType<GameEngineProps> }
 export const engines: Record<string, () => Promise<EngineModule>> = {
   chess: () => import('./engines/chess'),
   'tic-tac-toe': () => import('./engines/tic-tac-toe'),
+  cricket: () => import('./engines/cricket'),
 }

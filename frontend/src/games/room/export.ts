@@ -51,6 +51,19 @@ export function historyTable(gameId: string, history: string[] | undefined): His
     }
   }
 
+  if (gameId === 'cricket') {
+    // Entries look like "home 4 v 2: 4 runs": the batting side, the two picks, then what happened.
+    return {
+      heading: 'Ball by ball',
+      header: ['#', 'Batting', 'Bat', 'Bowl', 'Result'],
+      rows: history.map((ball, i) => {
+        const [side, bat, , bowl] = ball.split(/[ :]+/)
+        const result = ball.split(': ')[1] ?? ''
+        return [String(i + 1), side.charAt(0).toUpperCase() + side.slice(1), bat, bowl, result]
+      }),
+    }
+  }
+
   return { heading: 'Move history', header: ['#', 'Move'], rows: history.map((move, i) => [String(i + 1), move]) }
 }
 

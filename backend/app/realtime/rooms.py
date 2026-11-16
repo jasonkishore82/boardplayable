@@ -11,7 +11,8 @@ Messages from the browser (JSON):
     {"type": "chat", "text": "..."}   say something to the room
     {"type": "move", ...}             make a move (game rooms). Fields depend on the game:
                                       tic-tac-toe {"cell": 0-8}, chess {"from": "e2", "to": "e4"},
-                                      snakes and ladders {} (the server rolls the dice)
+                                      snakes and ladders {} (the server rolls the dice),
+                                      cricket {"pick": 1-6} (kept secret until both sides have picked)
     {"type": "resign"}                give up the game (chess)
     {"type": "seat", "seat": "black"} play the other side (chess). Only until the first move of a round is played.
     {"type": "start"}                 begin the game once both seats are taken (chess). Moves wait for it.
@@ -38,6 +39,7 @@ from fastapi import WebSocket
 from ..auth import User
 from ..games.bots import Bot
 from ..games.chessgame import Chess
+from ..games.cricket import Cricket
 from ..games.snakes import SnakesAndLadders
 from ..games.tictactoe import MoveError, TicTacToe
 
@@ -47,7 +49,7 @@ CHAT_HISTORY = 100
 # How long the computer "thinks" before it moves, so the move doesn't land instantly. Tests set it to 0.
 BOT_DELAY = 0.7
 
-GAMES = {"tic-tac-toe": TicTacToe, "chess": Chess, "snakes-and-ladders": SnakesAndLadders}
+GAMES = {"tic-tac-toe": TicTacToe, "chess": Chess, "snakes-and-ladders": SnakesAndLadders, "cricket": Cricket}
 
 
 @dataclass
