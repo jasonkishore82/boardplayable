@@ -6,7 +6,7 @@ import { BALL_STYLES, HOLES, PIN_FINISHES, ballMaps, holeCut, laneTexture, pinMa
 import { createPinAudio } from '../pin/audio.js'
 import { BALL_R, PIN_COM, PIN_H, profile } from '../pin/shape.js'
 import { FOUL_Z, GUTTER_R, LANE_W, OIL_END_Z, PIT_DEPTH, PIT_Z, bowl, createLane, settled, standing, stepLane, sweep } from './lane.js'
-import { TV_H, TV_W, drawTV } from './tv.js'
+import { TV_H, TV_SCALE, TV_W, drawTV } from './tv.js'
 
 // The alley: four full-size lanes side by side, each with its own rack, ball, gutters, kickbacks and pit, a masking
 // unit over the pins with the lane number, and a TV hung over the lane showing that lane's scorecard.
@@ -131,17 +131,29 @@ function Lane({ index, lane, parts, aim, tv, active }) {
 
   // the TV's screen
   const screen = useMemo(() => {
-    const c = Object.assign(document.createElement('canvas'), { width: TV_W, height: TV_H })
+    const c = Object.assign(document.createElement('canvas'), { width: TV_W * TV_SCALE, height: TV_H * TV_SCALE })
     const t = new THREE.CanvasTexture(c)
     t.colorSpace = THREE.SRGBColorSpace
-    t.anisotropy = 4
+    t.anisotropy = 8
     return { c, t }
   }, [])
   const num = useMemo(() => numberTexture(index + 1), [index])
   useEffect(() => () => (screen.t.dispose(), num.dispose()), [screen, num])
   useEffect(() => {
-    drawTV(screen.c.getContext('2d'), tv)
-    screen.t.needsUpdate = true
+    const draw = () => {
+      drawTV(screen.c.getContext('2d'), tv)
+      screen.t.needsUpdate = true
+    }
+    draw()
+    // the screen's font is only fetched when asked for, and a canvas doesn't ask: load it, then draw again
+    let live = true
+    document.fonts
+      ?.load('600 40px "Inter Variable"')
+      .then(() => live && draw())
+      .catch(() => {})
+    return () => {
+      live = false
+    }
   }, [tv, screen])
 
   useFrame(() => {

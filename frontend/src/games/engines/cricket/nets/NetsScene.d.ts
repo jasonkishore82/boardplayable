@@ -17,6 +17,8 @@ export type BatInput = {
 
 export type NetsSceneProps = {
   view: NetsView
+  /** Bump to put the camera back on `view` after the player has orbited it. */
+  recenter?: number
   pace: Pace
   /** Bump to bowl the next ball. */
   bowl: number

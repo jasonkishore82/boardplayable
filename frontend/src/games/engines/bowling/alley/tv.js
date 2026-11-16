@@ -1,146 +1,174 @@
-// The TV over each lane: a canvas drawn like a bowling centre's overhead scoring monitor. The lane number and the
-// bowler's name across the top, the ten-frame scorecard with its marks and running totals, the frame being bowled
-// lit up, and a big flash across it all after a strike, a spare or a gutter ball.
+// The TV over each lane, drawn like a modern AMOLED scoring monitor: true black, solid tiles with big bold numbers
+// (it is read from the far end of the approach, often small on screen), one warm accent for the lane that is up, and colour only where it means something (strikes, spares, the frame being bowled). The lane and
+// the bowler's name across the top with the total on the right, the ten-frame scorecard, a status line with the pins
+// still standing, and a full-screen flash after a strike, a spare or a gutter ball.
 //
-// tv: { lane, name, frames: [{ marks, total }], total, frame, up, message: { title, tone } | null, idle }
+// tv: { lane, name, frames: [{ marks, total }], total, frame, up, done, pins, message: { title, detail, tone } | null, idle }
+//
+// Drawn in TV_W x TV_H units; the canvas can be any multiple of that (TV_SCALE) and is scaled to fit, so it stays sharp.
 
 export const TV_W = 1024
 export const TV_H = 448
+export const TV_SCALE = 2
 
-const TONES = { strike: '#ffcf3a', spare: '#3ad6ff', miss: '#ff5c6c', pins: '#ffffff' }
+const FONT = '"Inter Variable", Inter, "Segoe UI", Arial, sans-serif'
+const C = {
+  black: '#000000',
+  tile: '#18181c', // the frame tiles
+  tileHi: '#232329',
+  nowTile: '#2b2008', // the frame being bowled, warm
+  text: '#f5f5f7',
+  dim: '#8a8a93',
+  faint: '#3a3a42',
+  accent: '#ffb627', // the lane that is up, the frame being bowled
+  strike: '#ffb627',
+  spare: '#3fd0ff',
+  miss: '#ff5a6a',
+}
+const TONES = { strike: C.strike, spare: C.spare, miss: C.miss, pins: C.text }
+const font = (weight, size) => `${weight} ${size}px ${FONT}`
 
 export function drawTV(ctx, tv) {
   const W = TV_W
   const H = TV_H
   const g = ctx
-  // the screen: a deep blue with a soft glow from the top, like a lit LCD
-  const bg = g.createLinearGradient(0, 0, 0, H)
-  bg.addColorStop(0, '#16285a')
-  bg.addColorStop(1, '#060b1c')
-  g.fillStyle = bg
+  const k = g.canvas.width / W
+  g.setTransform(k, 0, 0, k, 0, 0)
+  g.textBaseline = 'alphabetic'
+  g.shadowBlur = 0
+  if ('letterSpacing' in g) g.letterSpacing = '0px'
+
+  g.fillStyle = C.black
   g.fillRect(0, 0, W, H)
 
-  // header: lane number badge and the bowler's name
-  g.fillStyle = tv.up ? '#ffcf3a' : '#2b3f78'
-  roundRect(g, 24, 22, 150, 70, 14)
-  g.fill()
-  g.fillStyle = tv.up ? '#121a33' : '#e6ecff'
-  g.font = '800 40px Inter, Arial, sans-serif'
-  g.textAlign = 'center'
-  g.textBaseline = 'middle'
-  g.fillText(`LANE ${tv.lane}`, 99, 58)
+  const PAD = 26
+  const accent = tv.up ? C.accent : C.dim
 
+  // ---- header: lane badge, bowler, total ----
+  // the lane in a solid badge (amber when this lane is up), read from across the alley
+  g.font = font(800, 30)
+  const laneText = `LANE ${tv.lane}`
+  const bw = g.measureText(laneText).width + 36
+  g.fillStyle = tv.up && !tv.idle ? C.accent : C.tile
+  roundRect(g, PAD, 24, bw, 56, 10)
+  g.fill()
+  g.fillStyle = tv.up && !tv.idle ? C.black : C.text
   g.textAlign = 'left'
-  g.fillStyle = '#ffffff'
-  g.font = '800 46px Inter, Arial, sans-serif'
-  g.fillText(clip(g, tv.idle ? 'Open lane' : tv.name, 560), 200, 58)
+  g.fillText(laneText, PAD + 18, 63)
+
+  // the total on the right, its label just left of it; the name gets the room in between
+  let nameMax = W - PAD * 2 - bw - 22
   if (!tv.idle) {
+    const total = String(tv.total ?? 0)
     g.textAlign = 'right'
-    g.fillStyle = '#9fb3e8'
-    g.font = '700 24px Inter, Arial, sans-serif'
-    g.fillText('TOTAL', W - 30, 34)
-    g.fillStyle = '#ffffff'
-    g.font = '900 52px Inter, Arial, sans-serif'
-    g.fillText(String(tv.total ?? 0), W - 30, 76)
+    g.fillStyle = C.text
+    g.font = font(800, 92)
+    const tw = g.measureText(total).width
+    g.fillText(total, W - PAD, 92)
+    g.fillStyle = C.dim
+    g.font = font(800, 22)
+    g.fillText('TOTAL', W - PAD - tw - 16, 66)
+    nameMax = W - PAD - tw - 16 - g.measureText('TOTAL').width - 28 - (PAD + bw + 22)
   }
+  g.textAlign = 'left'
+  g.fillStyle = tv.idle ? C.dim : C.text
+  g.font = font(800, 54)
+  g.fillText(clip(g, tv.idle ? 'Open lane' : tv.name, nameMax), PAD + bw + 22, 72)
 
   if (tv.idle) {
     g.textAlign = 'center'
-    g.fillStyle = '#7f93cc'
-    g.font = '700 34px Inter, Arial, sans-serif'
+    g.fillStyle = C.text
+    g.font = font(800, 44)
     g.fillText('Board Playable Lanes', W / 2, 230)
-    g.font = '600 26px Inter, Arial, sans-serif'
+    g.fillStyle = C.dim
+    g.font = font(600, 28)
     g.fillText('Add a bowler to play on this lane', W / 2, 280)
-    drawPins(g, W / 2, 360)
+    drawPins(g, W / 2, 410, null)
     return
   }
 
-  // the scorecard: frames 1-9 have two mark boxes, the 10th three
-  const top = 130
-  const left = 24
-  const gap = 4
-  const unit = (W - left * 2 - gap * 9) / 10.6
-  let x = left
+  // ---- the scorecard: ten solid tiles, black gaps between (clear even when the TV is small on screen) ----
+  const top = 116
+  const bottom = 356
+  const gap = 8
+  const unit = (W - PAD * 2 - gap * 9) / 10.5
+  let x = PAD
   for (let f = 0; f < 10; f++) {
-    const w = f === 9 ? unit * 1.6 : unit
+    const w = f === 9 ? unit * 1.5 : unit
     const fr = tv.frames[f] || { marks: [], total: null }
-    const now = f === tv.frame
-    g.fillStyle = now ? '#24407f' : '#0e1838'
-    g.strokeStyle = now ? '#ffcf3a' : '#3a4f8a'
-    g.lineWidth = now ? 4 : 2
-    roundRect(g, x, top, w, 190, 8)
+    const now = !tv.done && f === tv.frame
+    // the tile
+    g.fillStyle = now ? (tv.up ? C.nowTile : C.tileHi) : C.tile
+    roundRect(g, x, top, w, bottom - top, 10)
     g.fill()
-    g.stroke()
+    if (now) {
+      g.strokeStyle = accent
+      g.lineWidth = 5
+      roundRect(g, x + 2.5, top + 2.5, w - 5, bottom - top - 5, 8)
+      g.stroke()
+    }
     // frame number
-    g.fillStyle = now ? '#ffcf3a' : '#8ea2da'
-    g.font = '700 22px Inter, Arial, sans-serif'
     g.textAlign = 'center'
-    g.fillText(String(f + 1), x + w / 2, top + 22)
-    // the mark boxes along the top right of the frame
-    const boxes = f === 9 ? 3 : 2
-    const bw = Math.min(42, (w - 10) / boxes)
-    for (let b = 0; b < boxes; b++) {
-      const bx = x + w - 6 - bw * (boxes - b)
-      g.strokeStyle = '#3a4f8a'
-      g.lineWidth = 2
-      g.strokeRect(bx, top + 42, bw, 44)
+    g.fillStyle = now ? accent : C.dim
+    g.font = font(800, 24)
+    g.fillText(String(f + 1), x + w / 2, top + 34)
+    // the marks, side by side
+    const n = f === 9 ? 3 : 2
+    const cw = (w - 8) / n
+    for (let b = 0; b < n; b++) {
       const m = fr.marks[b]
       if (!m) continue
-      g.fillStyle = m === 'X' ? TONES.strike : m === '/' ? TONES.spare : '#ffffff'
-      g.font = `900 ${m === 'X' || m === '/' ? 34 : 30}px Inter, Arial, sans-serif`
-      g.fillText(m, bx + bw / 2, top + 66)
+      g.fillStyle = m === 'X' ? C.strike : m === '/' ? C.spare : m === '-' ? C.dim : C.text
+      g.font = font(800, 38)
+      // a strike alone in frames 1-9 sits in the middle of its tile
+      const mx = f < 9 && m === 'X' && fr.marks.length === 1 ? x + w / 2 : x + 4 + cw * (b + 0.5)
+      g.fillText(m, mx, top + 96)
     }
-    // running total
+    // running total, as big as the tile allows
     if (fr.total !== null && fr.total !== undefined) {
-      g.fillStyle = '#ffffff'
-      g.font = '800 40px Inter, Arial, sans-serif'
-      g.fillText(String(fr.total), x + w / 2, top + 140)
+      g.fillStyle = C.text
+      fitFont(g, String(fr.total), 800, 62, w - 12)
+      g.fillText(String(fr.total), x + w / 2, bottom - 36)
     }
     x += w + gap
   }
 
-  // footer: whose turn it is
+  // ---- footer: whose turn it is, and the pins still standing ----
   g.textAlign = 'left'
-  g.fillStyle = tv.up ? '#ffcf3a' : '#7f93cc'
-  g.font = '700 28px Inter, Arial, sans-serif'
-  const foot = tv.done ? 'Game complete' : tv.up ? `Now bowling · frame ${Math.min(10, tv.frame + 1)}` : 'Waiting'
-  g.fillText(foot, 28, 368)
-  drawPins(g, W - 150, 372, tv.pins)
+  g.fillStyle = tv.done ? C.text : accent
+  g.font = font(800, 30)
+  const foot = tv.done ? 'Game complete' : tv.up ? `NOW BOWLING  ·  FRAME ${Math.min(10, tv.frame + 1)}` : 'Waiting'
+  g.fillText(foot, PAD, H - 32)
+  drawPins(g, W - PAD - 40, H - 14, tv.pins)
 
-  // the flash after a big ball
+  // ---- the flash after a big ball ----
   if (tv.message) {
-    g.fillStyle = 'rgba(4,8,20,0.78)'
+    g.fillStyle = 'rgba(0,0,0,0.92)'
     g.fillRect(0, 0, W, H)
-    const col = TONES[tv.message.tone] || '#ffffff'
+    const col = TONES[tv.message.tone] || C.text
     g.textAlign = 'center'
     g.fillStyle = col
     g.shadowColor = col
-    g.shadowBlur = 40
-    g.font = '900 150px Inter, Arial, sans-serif'
-    g.fillText(tv.message.title, W / 2, H / 2 - 10)
+    g.shadowBlur = 20
+    fitFont(g, tv.message.title, 900, 160, W - 80)
+    g.fillText(tv.message.title, W / 2, H / 2 + 40)
     g.shadowBlur = 0
     if (tv.message.detail) {
-      g.fillStyle = '#e6ecff'
-      g.font = '700 36px Inter, Arial, sans-serif'
-      g.fillText(tv.message.detail, W / 2, H / 2 + 100)
+      g.fillStyle = C.text
+      g.font = font(700, 40)
+      g.fillText(tv.message.detail, W / 2, H / 2 + 130)
     }
   }
 }
 
-// a little pin diagram: which pins stand (white) and which are down (dim)
-function drawPins(g, cx, cy, pins = null) {
-  const s = 26
-  const rows = [[6, 7, 8, 9], [3, 4, 5], [1, 2], [0]]
-  rows.forEach((row, r) => {
-    row.forEach((pin, i) => {
-      const x = cx + (i - (row.length - 1) / 2) * s
-      const y = cy - 40 + r * s * 0.85
-      g.beginPath()
-      g.arc(x, y, 8, 0, Math.PI * 2)
-      g.fillStyle = !pins || pins[pin] ? '#ffffff' : '#2b3f78'
-      g.fill()
-    })
-  })
+// sets the largest font up to `size` at which `text` fits in `max`
+function fitFont(g, text, weight, size, max) {
+  let s = size
+  g.font = font(weight, s)
+  while (s > 12 && g.measureText(text).width > max) {
+    s -= 2
+    g.font = font(weight, s)
+  }
 }
 
 function roundRect(g, x, y, w, h, r) {
@@ -151,6 +179,28 @@ function roundRect(g, x, y, w, h, r) {
   g.arcTo(x, y + h, x, y, r)
   g.arcTo(x, y, x + w, y, r)
   g.closePath()
+}
+
+// the pin diagram, head pin nearest: standing pins solid, knocked-down pins a faint ring
+function drawPins(g, cx, by, pins = null) {
+  const s = 21
+  const rows = [[6, 7, 8, 9], [3, 4, 5], [1, 2], [0]]
+  rows.forEach((row, r) => {
+    row.forEach((pin, i) => {
+      const x = cx + (i - (row.length - 1) / 2) * s
+      const y = by - (3 - r) * s * 0.86
+      g.beginPath()
+      g.arc(x, y, 7.5, 0, Math.PI * 2)
+      if (!pins || pins[pin]) {
+        g.fillStyle = C.text
+        g.fill()
+      } else {
+        g.strokeStyle = C.faint
+        g.lineWidth = 2.5
+        g.stroke()
+      }
+    })
+  })
 }
 
 function clip(g, text, max) {

@@ -26,4 +26,5 @@ export const engines: Record<string, () => Promise<EngineModule>> = {
   badminton: () => import('./engines/badminton'),
   'face-board': () => import('./engines/face-board'),
   'one-card': () => import('./engines/one-card'),
+  roulette: () => import('./engines/roulette'),
 }

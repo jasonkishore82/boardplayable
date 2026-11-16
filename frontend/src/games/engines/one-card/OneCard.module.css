@@ -33,3 +33,307 @@
 .leave:hover {
   border-color: rgb(255 255 255 / 0.4);
 }
+
+/* ---- setup and end-of-round panels ---- */
+.setup,
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+
+.setup {
+  background: radial-gradient(circle at 50% 40%, #24664c, #10291f 75%);
+}
+
+.overlay {
+  background: rgb(8 20 15 / 0.55);
+  backdrop-filter: blur(3px);
+}
+
+.panel {
+  width: min(420px, 100%);
+  padding: 28px 24px;
+  border-radius: 20px;
+  background: #1c1e21;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  box-shadow: 0 24px 60px rgb(0 0 0 / 0.45);
+  text-align: center;
+}
+
+.title {
+  margin: 0 0 8px;
+  font-size: 30px;
+  font-weight: 800;
+}
+
+.lede {
+  margin: 0 0 18px;
+  color: rgb(244 241 234 / 0.7);
+  font-size: 14px;
+}
+
+.label {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgb(244 241 234 / 0.6);
+}
+
+.choices,
+.colors,
+.row {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.row {
+  margin: 0;
+}
+
+.choice,
+.choiceOn {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  border: 1px solid rgb(255 255 255 / 0.18);
+  background: rgb(255 255 255 / 0.06);
+  color: inherit;
+  font: inherit;
+  font-size: 20px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.choiceOn {
+  background: #f4f1ea;
+  color: #1c1a16;
+  border-color: #f4f1ea;
+}
+
+.primary,
+.ghost,
+.one {
+  padding: 12px 24px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.primary {
+  background: #3ddc5a;
+  color: #0e2414;
+}
+
+.ghost {
+  background: rgb(255 255 255 / 0.1);
+  border-color: rgb(255 255 255 / 0.25);
+  color: #f4f1ea;
+}
+
+.one {
+  background: #f2c418;
+  color: #1c1a16;
+  font-size: 17px;
+  font-weight: 800;
+  animation: pulse 0.9s ease-in-out infinite alternate;
+}
+
+@keyframes pulse {
+  to {
+    transform: scale(1.08);
+    box-shadow: 0 0 0 6px rgb(242 196 24 / 0.25);
+  }
+}
+
+.link {
+  background: none;
+  border: none;
+  color: rgb(244 241 234 / 0.7);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.swatch {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  border: 3px solid rgb(255 255 255 / 0.85);
+  cursor: pointer;
+  transition: transform 0.12s;
+}
+
+.swatch:hover {
+  transform: scale(1.08);
+}
+
+.scores {
+  width: 100%;
+  margin: 8px 0 14px;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.scores th,
+.scores td {
+  padding: 7px 6px;
+  border-bottom: 1px solid rgb(255 255 255 / 0.08);
+  text-align: left;
+}
+
+.scores th {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgb(244 241 234 / 0.55);
+}
+
+.scores td:last-child,
+.scores th:last-child {
+  text-align: right;
+}
+
+.won td {
+  color: #3ddc5a;
+  font-weight: 700;
+}
+
+/* ---- in-game heads-up text and buttons ---- */
+.hud {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  z-index: 6;
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: flex-start;
+  gap: 6px;
+  max-width: min(420px, calc(100% - 340px));
+  pointer-events: none;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.4);
+  font-weight: 600;
+}
+
+.dot {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px rgb(255 255 255 / 0.7);
+}
+
+.last {
+  margin: 0;
+  padding: 0 6px;
+  font-size: 13px;
+  color: rgb(244 241 234 / 0.75);
+  text-shadow: 0 1px 3px rgb(0 0 0 / 0.6);
+}
+
+.dir {
+  position: fixed;
+  top: 18px;
+  right: 16px;
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgb(244 241 234 / 0.75);
+}
+
+.actions {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.count {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgb(244 241 234 / 0.75);
+}
+
+@media (max-width: 640px) {
+  .hud {
+    bottom: 72px;
+    max-width: calc(100% - 32px);
+  }
+
+  .actions {
+    left: 16px;
+    justify-content: center;
+  }
+}
+
+/* the other players' name tags, drawn by drei's <Html> inside the canvas */
+:global(.oc-seat) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 6px 5px 12px;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.5);
+  color: #f4f1ea;
+  font: 600 13px/1 var(--font-sans);
+  white-space: nowrap;
+  transition: box-shadow 0.2s, background 0.2s;
+}
+
+:global(.oc-seat-on) {
+  background: rgb(0 0 0 / 0.7);
+  box-shadow: 0 0 0 2px #f4f1ea, 0 0 18px rgb(255 255 255 / 0.35);
+}
+
+:global(.oc-seat-won) {
+  box-shadow: 0 0 0 2px #3ddc5a;
+}
+
+:global(.oc-seat-count) {
+  min-width: 22px;
+  padding: 4px 6px;
+  border-radius: 999px;
+  background: #f4f1ea;
+  color: #1c1a16;
+  text-align: center;
+}
+
+:global(.oc-seat-one) {
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #f2c418;
+  color: #1c1a16;
+  font-weight: 800;
+}
+
+:global(.oc-catch) {
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: none;
+  background: #d8262b;
+  color: #fff;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}

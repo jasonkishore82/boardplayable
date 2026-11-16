@@ -361,7 +361,7 @@
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
   transition: transform 500ms var(--glide);
 }
 
@@ -561,6 +561,19 @@
   color: var(--pl-green-text);
   box-shadow: 0 6px 16px rgb(61 220 76 / 0.25);
   transition: scale 260ms var(--glide);
+}
+
+.cardSoonTag {
+  position: absolute;
+  right: 12px;
+  bottom: 21px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgb(255 182 39 / 0.16);
+  color: #b77900;
+  font-size: 12px;
+  font-weight: 700;
+  pointer-events: none;
 }
 
 .cardPlay:hover {

@@ -262,6 +262,35 @@ const glyphs: Record<string, Glyph> = {
       <circle cx="37" cy="11" r="4.5" fill={url('ball')} stroke="#f08a24" strokeWidth="0.6" />
     </>
   ),
+  carrom: (url, id) => (
+    <>
+      <defs>
+        {lin(id('frame'), '#8a4b22', '#4e2610')}
+        {lin(id('board'), '#f6dfb3', '#e2bf86')}
+        {rad(id('queen'), '#ff6b6b', '#b3121f')}
+        {rad(id('white'), '#ffffff', '#e2d6c0')}
+        {rad(id('black'), '#5a5a62', '#16161a')}
+      </defs>
+      <rect x="4" y="4" width="40" height="40" rx="5" fill={url('frame')} />
+      <rect x="8" y="8" width="32" height="32" rx="1.5" fill={url('board')} />
+      {[
+        [10.5, 10.5],
+        [37.5, 10.5],
+        [10.5, 37.5],
+        [37.5, 37.5],
+      ].map(([x, y]) => (
+        <circle key={`${x}${y}`} cx={x} cy={y} r="2.4" fill="#2a160a" />
+      ))}
+      <circle cx="24" cy="24" r="7.5" fill="none" stroke="#a5652e" strokeWidth="0.9" />
+      <path d="M14 13.5h20M14 34.5h20M13.5 14v20M34.5 14v20" stroke="#a5652e" strokeWidth="0.9" />
+      <circle cx="24" cy="24" r="2.6" fill={url('queen')} />
+      <circle cx="19.6" cy="21.6" r="2.4" fill={url('white')} stroke="#bfae90" strokeWidth="0.4" />
+      <circle cx="28.4" cy="26.4" r="2.4" fill={url('white')} stroke="#bfae90" strokeWidth="0.4" />
+      <circle cx="28.4" cy="21.6" r="2.4" fill={url('black')} />
+      <circle cx="19.6" cy="26.4" r="2.4" fill={url('black')} />
+      <circle cx="24" cy="34.5" r="3.2" fill="#f2f2f2" stroke="#3a86ff" strokeWidth="1" />
+    </>
+  ),
 }
 
 // the nets were part of Cricket until they became their own game: the same bat and ball

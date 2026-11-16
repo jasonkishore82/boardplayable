@@ -23,6 +23,7 @@ const BY_GAME: Record<string, Pair> = {
   badminton: ['#9fb4d8', '#2e3f66'],
   tennis: ['#c6d93f', '#2f6b25'],
   'table-tennis': ['#ff7043', '#1e3a8a'],
+  carrom: ['#e2b06a', '#5a2d12'],
 }
 
 const BY_CATEGORY: Record<CategoryId, Pair> = {
@@ -40,6 +41,9 @@ const SHOTS: Record<string, string> = {
   chess: '/covers/chess.jpg',
   'tic-tac-toe': '/covers/tic-tac-toe.jpg',
   'free-flight': '/covers/free-flight.jpg',
+  bowling: '/covers/bowling.jpg',
+  roulette: '/covers/roulette.jpg',
+  'one-card': '/covers/one-card.jpg',
 }
 
 /** The game's in-game screenshot, when it has one. */

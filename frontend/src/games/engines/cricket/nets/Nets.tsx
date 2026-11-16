@@ -68,6 +68,7 @@ export default function Nets() {
   const [paused, setPaused] = useState(false)
   const [pace, setPace] = useState<Pace>(() => load(PACE_KEY, PACES.map((p) => p.id), 'medium'))
   const [view, setView] = useState<NetsView>('batter')
+  const [recenter, setRecenter] = useState(0) // bumped by a view button: snaps the camera back after orbiting
   const [sound, setSound] = useState(true)
   const [webcam, setWebcam] = useState(false)
   const [bowl, setBowl] = useState(0)
@@ -234,6 +235,7 @@ export default function Nets() {
   const steer = (e: PointerEvent<HTMLDivElement>) => {
     if (ctrl.ready || phase !== 'playing') return
     if (e.pointerType !== 'mouse' && !pointerDown.current) return
+    if (e.pointerType === 'mouse' && e.buttons) return // a mouse drag orbits the camera; hovering steers the bat
     input.current.q = null
     const r = e.currentTarget.getBoundingClientRect()
     const nx = ((e.clientX - r.left) / r.width) * 2 - 1
@@ -299,6 +301,7 @@ export default function Nets() {
       >
         <NetsScene
           view={view}
+          recenter={recenter}
           pace={pace}
           bowl={bowl}
           input={input}
@@ -376,7 +379,10 @@ export default function Nets() {
           </div>
           <div className={styles.views} role="group" aria-label="Camera">
             {VIEWS.map((v) => (
-              <button key={v.id} type="button" aria-pressed={view === v.id} onClick={() => setView(v.id)}>
+              <button key={v.id} type="button" aria-pressed={view === v.id} onClick={() => {
+                  setView(v.id)
+                  setRecenter((n) => n + 1)
+                }}>
                 {v.name}
               </button>
             ))}
@@ -393,7 +399,7 @@ export default function Nets() {
                 ? 'The bat copies your phone. Swing it like a real bat: lift it back, then bring it down through the ball.'
                 : touch
                   ? 'Drag down to lift the bat, flick up through the ball to swing.'
-                  : 'Mouse down to lift the bat, flick it up through the ball. Or press Space.'}
+                  : 'Move the mouse down to lift the bat, flick it up through the ball, or press Space. Drag to orbit, wheel to zoom.'}
             </p>
           )}
           {touch && phase === 'playing' && !ctrl.ready && !paused && (

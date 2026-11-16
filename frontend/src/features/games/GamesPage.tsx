@@ -37,8 +37,8 @@ export function GamesPage() {
         (!q || g.name.toLowerCase().includes(q) || g.description.toLowerCase().includes(q)),
     )
   }, [query, category])
-  const playable = shown.filter((g) => g.status === 'available')
-  const soon = shown.filter((g) => g.status !== 'available')
+  const playable = shown.filter((g) => g.status === 'available' || g.showcase)
+  const soon = shown.filter((g) => g.status !== 'available' && !g.showcase)
 
   // The selection follows the filters: if the chosen game is filtered out, the first one left takes its place.
   const selected = shown.find((g) => g.id === selectedId) ?? playable[0] ?? shown[0]
@@ -221,10 +221,12 @@ function Card({
           <span className={styles.cardMeta}>{available ? categoryLabel(game.category) : 'Soon'}</span>
         </span>
       </button>
-      {available && (
+      {available ? (
         <Link to={`/games/${game.id}`} className={styles.cardPlay} aria-label={`Play ${game.name}`}>
           <PlayIcon />
         </Link>
+      ) : (
+        game.showcase && <span className={styles.cardSoonTag}>Coming soon</span>
       )}
     </li>
   )

@@ -40,7 +40,7 @@ import { createBall, stepBall } from '../tennisball/physics.js'
 // at the start of every physics step (1/600 s), so something else (a bat) can
 // move in step with the balls; onBallStep(body, h) runs after every step of
 // every ball in flight, so it can meet them; onEvent(type, body) reports
-// 'launch' and 'stumps'.
+// 'launch' and 'stumps' ('launch' also passes where the ball will first land).
 
 const G = 9.81
 const RW = 0.095 // throwing wheel radius
@@ -420,7 +420,21 @@ export default function BowlingMachine({
     world.rpm *= live.current.ball === 'cricket' ? 0.86 : 0.94
     play('launch', v / 30)
     onReport?.({ kmh: Math.round(v * 3.6), rpm: Math.round(world.rpm), fired: world.fired })
-    live.current.onEvent?.('launch', body)
+    live.current.onEvent?.('launch', body, predictPitch(body))
+  }
+
+  // Where a ball just launched will first land: fly a copy of it with the same physics (no bat, no stumps).
+  const predictPitch = (body) => {
+    const c = { ...body, p: body.p.clone(), v: body.v.clone(), w: body.w.clone(), q: body.q.clone(), held: null, onGround: false }
+    const h = 1 / 600
+    let hit = null
+    for (let i = 0; i < 1800 && !hit; i++) {
+      stepBall(c, h, P, planes, (s, kind) => {
+        if (kind === 'floor') hit = c.p.clone().setY(0)
+      })
+      if (!hit && c.onGround) hit = c.p.clone().setY(0)
+    }
+    return hit
   }
 
   const tmp = useMemo(() => ({ a: new THREE.Vector3(), b: new THREE.Vector3(), q: new THREE.Quaternion(), ax: new THREE.Vector3() }), [])

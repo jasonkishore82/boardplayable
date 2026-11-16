@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { Environment, Lightformer, Sky } from '@react-three/drei'
+import { Environment, Lightformer, OrbitControls, Sky } from '@react-three/drei'
 import * as THREE from 'three'
 import BowlingMachine, { STUMPS } from './bowler/BowlingMachine.jsx'
 import Pitch from './pitch/Pitch.jsx'
@@ -113,29 +113,86 @@ function Light() {
   )
 }
 
-// Moves the camera between the views, easing over half a second.
-function CameraRig({ view }) {
+// Moves the camera between the views, easing over half a second, with orbit controls on top. With a mouse, a
+// drag orbits (right-drag pans, the wheel zooms) while hovering steers the bat; on touch one finger steers, so two
+// fingers orbit and zoom. Once the player orbits, the rig lets go until a view is picked again.
+function CameraRig({ view, recenter }) {
   const { camera } = useThree()
-  const look = useRef(new THREE.Vector3(...VIEWS.batter.look))
+  const controls = useRef()
+  const free = useRef(false)
   const first = useRef(true)
+  const pos = useMemo(() => new THREE.Vector3(), [])
+  const look = useMemo(() => new THREE.Vector3(), [])
+  useEffect(() => {
+    free.current = false
+  }, [view, recenter])
   useFrame((_, dt) => {
+    const c = controls.current
+    if (!c || free.current) return
     const v = VIEWS[view] || VIEWS.batter
     const k = first.current ? 1 : 1 - Math.exp(-Math.min(dt, 0.05) * 6)
     first.current = false
-    camera.position.lerp(new THREE.Vector3(...v.pos), k)
-    look.current.lerp(new THREE.Vector3(...v.look), k)
+    camera.position.lerp(pos.set(...v.pos), k)
+    c.target.lerp(look.set(...v.look), k)
     camera.fov += (v.fov - camera.fov) * k
     camera.updateProjectionMatrix()
-    camera.lookAt(look.current)
+    c.update()
   })
-  return null
+  return (
+    <OrbitControls
+      ref={controls}
+      makeDefault
+      onStart={() => {
+        free.current = true
+      }}
+      mouseButtons={{ LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.PAN }}
+      touches={{ ONE: -1, TWO: THREE.TOUCH.DOLLY_ROTATE }}
+      minDistance={0.3}
+      maxDistance={60}
+      maxPolarAngle={1.55}
+    />
+  )
 }
 
-function Scene({ view, pace, bowl, input, sound, onDelivery, onContact, onReport, onLaunch }) {
+// Where the ball being bowled will pitch: a bright ring flat on the turf with a dot in the middle, pulsing gently so
+// it reads as a marker and not a mark on the pitch. It stays after the bounce until the next ball.
+function PitchMarker({ at }) {
+  const ref = useRef()
+  useFrame(({ clock }) => {
+    if (!ref.current) return
+    const s = 1 + Math.sin(clock.elapsedTime * 6) * 0.08
+    ref.current.scale.set(s, s, 1)
+  })
+  if (!at) return null
+  const mat = (opacity) => (
+    <meshBasicMaterial color="#ffd23f" transparent opacity={opacity} depthWrite={false} polygonOffset polygonOffsetFactor={-4} toneMapped={false} />
+  )
+  return (
+    <group position={[at.x, 0.006, at.z]} rotation-x={-Math.PI / 2}>
+      <group ref={ref}>
+        <mesh renderOrder={2}>
+          <ringGeometry args={[0.13, 0.17, 48]} />
+          {mat(0.95)}
+        </mesh>
+        <mesh renderOrder={2}>
+          <circleGeometry args={[0.13, 48]} />
+          {mat(0.18)}
+        </mesh>
+      </group>
+      <mesh renderOrder={3}>
+        <circleGeometry args={[0.03, 24]} />
+        {mat(1)}
+      </mesh>
+    </group>
+  )
+}
+
+function Scene({ view, recenter, pace, bowl, input, sound, onDelivery, onContact, onReport, onLaunch }) {
   const bat = useMemo(() => createBatter(), [])
   const batRef = useRef()
   const [settings, setSettings] = useState(() => nextDelivery(pace))
   const [feed, setFeed] = useState(0)
+  const [pitchAt, setPitchAt] = useState(null) // where the ball in the air will land
   const cb = useRef({})
   cb.current = { onDelivery, onContact, onLaunch, sound }
 
@@ -143,6 +200,7 @@ function Scene({ view, pace, bowl, input, sound, onDelivery, onContact, onReport
   // one go from the hopper.
   useEffect(() => {
     if (!bowl) return undefined
+    setPitchAt(null)
     setSettings(nextDelivery(pace))
     const t = setTimeout(() => setFeed((f) => f + 1), 750)
     return () => clearTimeout(t)
@@ -166,8 +224,9 @@ function Scene({ view, pace, bowl, input, sound, onDelivery, onContact, onReport
     cb.current.onDelivery?.(result)
   }
 
-  const onEvent = (type, body) => {
+  const onEvent = (type, body, landing) => {
     if (type === 'launch') {
+      setPitchAt(landing || null)
       ball.current = { body, t: 0, hit: false, lastHit: 0, exit: null, done: false }
       cb.current.onLaunch?.()
     } else if (type === 'stumps') {
@@ -249,7 +308,8 @@ function Scene({ view, pace, bowl, input, sound, onDelivery, onContact, onReport
           </mesh>
         ))}
       </group>
-      <CameraRig view={view} />
+      <PitchMarker at={pitchAt} />
+      <CameraRig view={view} recenter={recenter} />
     </>
   )
 }

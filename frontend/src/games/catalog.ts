@@ -13,6 +13,8 @@ export type Game = {
   /** Null when the count depends on the variant (e.g. card games). */
   players: { min: number; max: number } | null
   status: 'available' | 'coming-soon'
+  /** A coming-soon game listed under "Play now" ahead of its release. Its card says "Coming soon" instead of playing. */
+  showcase?: boolean
 }
 
 export const CATEGORIES: { id: CategoryId; label: string }[] = [
@@ -46,7 +48,7 @@ export const GAMES: Game[] = [
     description: 'Fill the board with your own photos, pick a secret face and flip frames down as you guess.',
     category: 'classic',
     players: { min: 2, max: 2 },
-    status: 'available',
+    status: 'coming-soon',
   },
   {
     id: 'free-flight',
@@ -91,10 +93,10 @@ export const GAMES: Game[] = [
   {
     id: 'roulette',
     name: 'Roulette',
-    description: 'Place your chips on a number or colour, spin the wheel and see where the ball lands.',
+    description: 'Place your chips on a number or colour, spin the wheel and watch where the ball settles.',
     category: 'casino',
-    players: { min: 1, max: 8 },
-    status: 'coming-soon',
+    players: { min: 1, max: 1 },
+    status: 'available',
   },
   {
     id: 'poker',
@@ -118,7 +120,7 @@ export const GAMES: Game[] = [
     description: 'Face a bowling machine on a full-size 3D pitch. Swing with the mouse, or use your phone as the bat.',
     category: 'sports',
     players: { min: 1, max: 1 },
-    status: 'available',
+    status: 'coming-soon',
   },
   {
     id: 'cricket',
@@ -126,7 +128,7 @@ export const GAMES: Game[] = [
     description: 'Each ball, you both pick 1 to 6. Match the batter and they are out; otherwise they score what they picked.',
     category: 'sports',
     players: { min: 2, max: 2 },
-    status: 'available',
+    status: 'coming-soon',
   },
   {
     id: 'badminton',
@@ -134,7 +136,7 @@ export const GAMES: Game[] = [
     description: 'Singles against the computer on a full-size court. Click to swing, or swing your phone like a racket.',
     category: 'sports',
     players: { min: 1, max: 1 },
-    status: 'available',
+    status: 'coming-soon',
   },
   {
     id: 'tennis',
@@ -149,6 +151,14 @@ export const GAMES: Game[] = [
     name: 'Table tennis',
     description: 'Fast rallies across a small table. First to 11 points takes the game.',
     category: 'sports',
+    players: { min: 2, max: 4 },
+    status: 'coming-soon',
+  },
+  {
+    id: 'carrom',
+    name: 'Carrom',
+    description: 'Flick the striker to pocket your coins and the queen on a square wooden board.',
+    category: 'classic',
     players: { min: 2, max: 4 },
     status: 'coming-soon',
   },

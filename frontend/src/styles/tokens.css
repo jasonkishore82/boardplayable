@@ -3,7 +3,7 @@
    Other files (including the game boards) use these names, so keep them. */
 :root,
 [data-theme='dark'] {
-  --font-sans: 'Poppins', 'Inter Variable', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-sans: 'Fira Sans', 'Inter Variable', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-display: var(--font-sans);
 
   /* Near-black charcoal, flat (Playline-style dark dashboard). */
