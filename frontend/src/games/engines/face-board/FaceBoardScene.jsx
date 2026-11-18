@@ -3,6 +3,7 @@ import { Canvas, useThree } from '@react-three/fiber'
 import { ContactShadows, Environment, Lightformer, OrbitControls } from '@react-three/drei'
 import * as THREE from 'three'
 import FaceBoard from './FaceBoard.jsx'
+import { faceCard } from './faceCrop.js'
 
 const BG = '#e9e7e3'
 const MAX = 50 // the most frames a board can have (5 rows of 10)
@@ -41,24 +42,6 @@ function Rig({ rows, cols }) {
   return null
 }
 
-// a photo, scaled down so a board full of them stays small enough to keep
-const shrink = (file) =>
-  new Promise((resolve) => {
-    const url = URL.createObjectURL(file)
-    const img = new Image()
-    img.onload = () => {
-      const s = Math.min(1, 360 / Math.max(img.width, img.height))
-      const c = Object.assign(document.createElement('canvas'), { width: Math.round(img.width * s), height: Math.round(img.height * s) })
-      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height)
-      URL.revokeObjectURL(url)
-      resolve(c.toDataURL('image/jpeg', 0.86))
-    }
-    img.onerror = () => {
-      URL.revokeObjectURL(url)
-      resolve(null)
-    }
-    img.src = url
-  })
 // "anna_smith-2.jpg" -> "Anna"
 const nameOf = (file) => {
   const base = file.name.replace(/\.[^.]+$/, '').replace(/[_\-.]+/g, ' ').trim()
@@ -113,19 +96,25 @@ export default function FaceBoardScene({ autoRotate = false, rows = 3, cols = 8,
   }, [note])
 
   // put files on the board: the first onto `at` if given, the rest into the
-  // empty frames in order
+  // empty frames in order. Each photo is cropped to the face in it (faceCrop.js).
   const place = async (files, at = -1) => {
     const list = [...files].filter((f) => f.type.startsWith('image/'))
     if (!list.length) return
-    const loaded = (await Promise.all(list.map(async (f) => ({ src: await shrink(f), name: nameOf(f) })))).filter((p) => p.src)
+    setNote(list.length > 1 ? `Finding the faces in ${list.length} photos…` : 'Finding the face…')
+    const cards = await Promise.all(list.map(async (f) => ({ card: await faceCard(f), name: nameOf(f) })))
+    const loaded = cards.filter((p) => p.card).map((p) => ({ src: p.card.src, name: p.name }))
+    const missed = cards.filter((p) => p.card && !p.card.found).length
+    const notes = []
+    if (missed) notes.push(`No face found in ${missed === 1 ? 'one photo' : `${missed} photos`}: showing ${missed === 1 ? 'it' : 'them'} whole`)
     setPhotos((prev) => {
       const next = Array.from({ length: Math.max(prev.length, N) }, (_, i) => prev[i] || null)
       let k = 0
       if (at >= 0 && at < N && loaded[0]) next[at] = loaded[k++]
       for (let i = 0; i < N && k < loaded.length; i++) if (!next[i]) next[i] = loaded[k++]
-      if (k < loaded.length) setNote(`Board full: ${loaded.length - k} photo${loaded.length - k > 1 ? 's' : ''} left over`)
+      if (k < loaded.length) notes.push(`Board full: ${loaded.length - k} photo${loaded.length - k > 1 ? 's' : ''} left over`)
       return next
     })
+    setNote(notes.join(' · '))
   }
   const filled = photos.slice(0, N).map((p, i) => (p ? i : -1)).filter((i) => i >= 0)
 
@@ -194,7 +183,7 @@ export default function FaceBoardScene({ autoRotate = false, rows = 3, cols = 8,
           {drag ? 'Drop photos: onto a frame to put one there, anywhere else to fill the empty frames' : note}
         </div>
       )}
-      <InfoHint>Add photos, or drop image files onto the board (onto a frame to put one there) · names come from the file names · click a frame to flip it down, click again to flip it up · Pick secret puts a card in your holder · your photos stay in this browser</InfoHint>
+      <InfoHint>Add photos, or drop image files onto the board (onto a frame to put one there) · each photo is cropped to the face in it · names come from the file names · click a frame to flip it down, click again to flip it up · Pick secret puts a card in your holder · your photos stay in this browser</InfoHint>
     </div>
   )
 }
